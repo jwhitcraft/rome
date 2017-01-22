@@ -1,0 +1,7 @@
+package: github.com/jwhitcraft/rome
+import:
+- package: github.com/sanbornm/go-selfupdate
+  subpackages:
+  - selfupdate
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper

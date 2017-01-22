@@ -1,0 +1,12 @@
+hash: 6c1428dc2351ee6ba64113b440757edd87283e923650586709ceec9555515020
+updated: 2017-01-22T18:49:22.644851635-05:00
+imports:
+- name: github.com/sanbornm/go-selfupdate
+  version: bf295275fb1ee4e347c09330ed9a3c76cc19895a
+  subpackages:
+  - selfupdate
+- name: github.com/spf13/cobra
+  version: dc208f4211e7f6df7ec8cb62640f57d3e154910d
+- name: github.com/spf13/viper
+  version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+testImports: []

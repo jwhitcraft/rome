@@ -7,23 +7,27 @@ BUILD_TIME=`date +%FT%T%z`
 
 LDFLAGS=-ldflags "-X github.com/jwhitcraft/rome/cmd.Version=${VERSION} -X github.com/jwhitcraft/rome/cmd.BuildTime=${BUILD_TIME}"
 
+check-env:
+ifndef VERSION
+	$(error VERSION is undefined)
+endif
+
 .DEFAULT_GOAL: all
 
 build = GOOS=$(1) GOARCH=$(2) go build ${LDFLAGS} -o packages/$(1)-$(2)$(3)
 
 .PHONY: all windows darwin linux clean
 
-all: windows darwin linux
+all: check-env windows darwin linux
 
-$(BINARY): $(SOURCES)
+.PHONY: dev
+
+dev: $(SOURCES)
 	go build ${LDFLAGS} -o ${BINARY} main.go
-
-.PHONY: install
-install:
-	go install ${LDFLAGS} ./...
 
 .PHONY: clean
 clean:
+	if [ -f ./${BINARY} ] ; then rm ${BINARY} ; fi
 	if [ -d ./packages ] ; then rm ./packages/* ; fi
 
 ##### LINUX BUILDS #####
