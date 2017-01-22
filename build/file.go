@@ -1,4 +1,5 @@
-package main
+package build
+
 
 import (
 	"fmt"
@@ -9,6 +10,8 @@ import (
 	"regexp"
 	"io/ioutil"
 	"path"
+
+	"github.com/jwhitcraft/rome/utils"
 )
 
 var (
@@ -27,11 +30,11 @@ var (
 	VarRegex = regexp.MustCompile( "@_SUGAR_(FLAV|VERSION)")
 )
 
-func BuildFile(srcPath string, destPath string, buildFlavor string) bool {
+func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion string) bool {
 	var useLine bool = true
 	var shouldProcess bool = false
 
-	var skippedLines counter
+	var skippedLines utils.Counter
 
 	// lets make sure the that folder exists
 	var destFolder string = path.Dir(destPath)
@@ -69,7 +72,7 @@ func BuildFile(srcPath string, destPath string, buildFlavor string) bool {
 		matches := VarRegex.FindStringSubmatch(fileString)
 		switch matches[1] {
 		case "VERSION":
-			fileString = strings.Replace(fileString, "@_SUGAR_VERSION", "7.9.0.0", -1)
+			fileString = strings.Replace(fileString, "@_SUGAR_VERSION", buildVersion, -1)
 		case "FLAV":
 			fileString = strings.Replace(fileString, "@_SUGAR_FLAV", buildFlavor, -1)
 		}
@@ -106,18 +109,18 @@ func BuildFile(srcPath string, destPath string, buildFlavor string) bool {
 					//fmt.Printf("// Begin Tag Found for flavor: %s and building %s, should use lines: %t\n", tagFlav, buildFlavor, tagOk)
 					useLine = tagOk
 					if tagOk == false {
-						skippedLines.increment()
+						skippedLines.Increment()
 					}
 				case "END":
 					//fmt.Printf("// Skipped %d lines\n", skippedLines.get())
-					skippedLines.reset()
+					skippedLines.Reset()
 					useLine = true
 				}
 			} else if useLine {
 				fmt.Println(val) // Println will add back the final '\n'
 				fmt.Fprintln(writer, val)
 			} else {
-				skippedLines.increment()
+				skippedLines.Increment()
 			}
 		}
 		if err := scanner.Err(); err != nil {

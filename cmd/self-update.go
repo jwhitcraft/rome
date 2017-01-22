@@ -17,18 +17,37 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-package main
+
+package cmd
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/jwhitcraft/rome/cmd"
+	"github.com/spf13/cobra"
+	"github.com/sanbornm/go-selfupdate/selfupdate"
 )
 
-func main() {
-	if err := cmd.RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
+// self-updateCmd represents the self-update command
+var selfUpdateCmd = &cobra.Command{
+	Use:   "self-update",
+	Short: "Update Rome if a new version exists",
+	Long: `This will allow Rome to update it's self like copmoser or other new fangled tools do`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// TODO: Work your own magic here
+		fmt.Println("self-update called")
+		var updater = &selfupdate.Updater{
+			CurrentVersion: Version,
+			ApiURL:         "http://h2ik.co/",
+			BinURL:         "http://h2ik.co/",
+			DiffURL:        "http://h2ik.co/",
+			Dir:            "update/",
+			CmdName:        "rome", // app name
+		}
+
+		updater.BackgroundRun()
+	},
+}
+
+func init() {
+	RootCmd.AddCommand(selfUpdateCmd)
 }

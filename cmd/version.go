@@ -17,18 +17,30 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-package main
+
+package cmd
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/jwhitcraft/rome/cmd"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	if err := cmd.RootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
-	}
+var (
+	Version   = "1.0.0"
+	BuildTime = "2015-10-03T11:08:49+0200"
+)
+
+// versionCmd represents the version command
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "What Version of Rome is this",
+	Long: `Just Displays the Version of Rome`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("SugarCRM Rome, A Build Tool\n Version: %s, Built At: %s", Version, BuildTime)
+	},
+}
+
+func init() {
+	RootCmd.AddCommand(versionCmd)
 }
