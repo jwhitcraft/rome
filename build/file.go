@@ -20,8 +20,8 @@ var (
 	Flavors = map[string][]string{
 		"pro": {"pro"},
 		"corp": {"pro", "corp"},
-		"ent": {"pro", "corp", "ent"},
-		"ult": {"pro", "corp", "ent", "ult"},
+		"ent": {"pro", "ent"},
+		"ult": {"pro", "ent", "ult"},
 	}
 
 	License = map[string][]string {
@@ -32,6 +32,43 @@ var (
 
 	VarRegex = regexp.MustCompile( "@_SUGAR_(FLAV|VERSION)")
 )
+
+func ProcessBuildTag(tag string, flavors []string ) bool {
+	// first things first, check for &&
+	tags := strings.Split(tag, "&&")
+	ok := true
+	for _, tag := range tags {
+		tag = strings.TrimSpace(tag)
+		tagSep := getTagSperator(tag)
+		tagKey := getTagKey(tag, tagSep)
+		tagVal := getTagValue(tag, tagSep)
+		var testValue []string
+		var tagOk bool
+		// default the tag to be allowed, only change it something else is off
+		switch tagKey {
+		case "flav":
+			testValue = flavors
+		case "lic":
+			testValue = License[tagKey]
+		}
+		if tagSep == "!=" {
+			tagOk = notContains(testValue, tagVal)
+		} else {
+			tagOk = contains(testValue, tagVal)
+		}
+		ok = ok && tagOk
+	}
+
+	return ok
+}
+
+func getTagSperator(tag string) string {
+	if strings.Contains(tag, "!=") {
+		return "!="
+	}
+
+	return "="
+}
 
 func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion string) bool {
 	var useLine bool = true
@@ -60,8 +97,7 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 		// check to see if it's a type of FILE
 		matches := TagRegex.FindStringSubmatch(fileString)
 		if matches[1] == "FILE" {
-			tagFlav := getTagValue(matches[2])
-			tagOk := contains(Flavors[buildFlavor], tagFlav)
+			tagOk := ProcessBuildTag(matches[2], Flavors[buildFlavor])
 			//fmt.Printf("// File Tag Found for flavor: %s and building %s, should build file: %t\n", tagFlav, buildFlavor, tagOk)
 			if tagOk == false {
 				return false
@@ -101,19 +137,9 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 
 				switch matches[1] {
 				case "BEGIN":
-					tagKey := getTagKey(matches[2])
-					tagFlav := getTagValue(matches[2])
-					// default the tag to be allowed, only change it something else is off
-					tagOk := true
-					switch tagKey {
-					case "flav":
-						tagOk = contains(Flavors[buildFlavor], tagFlav)
-					case "lic":
-						tagOk = contains(License[tagKey], tagFlav)
-					}
 					//fmt.Printf("// Begin Tag Found for flavor: %s and building %s, should use lines: %t\n", tagFlav, buildFlavor, tagOk)
-					useLine = tagOk
-					if tagOk == false {
+					useLine = ProcessBuildTag(matches[2], Flavors[buildFlavor])
+					if !useLine {
 						skippedLines.Increment()
 					}
 				case "END":
@@ -140,8 +166,8 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 	return true
 }
 
-func getTagValue(eval string) string {
-	splitFlav := strings.Split(eval, "=")
+func getTagValue(eval string, splitOn string) string {
+	splitFlav := strings.Split(eval, splitOn)
 	if len(splitFlav) == 1 {
 		return strings.ToLower(splitFlav[0])
 	}
@@ -149,14 +175,18 @@ func getTagValue(eval string) string {
 	return strings.ToLower(splitFlav[1])
 }
 
-func getTagKey(eval string) string {
-	splitFlav := strings.Split(eval, "=")
+func getTagKey(eval string, splitOn string) string {
+	splitFlav := strings.Split(eval, splitOn)
 
 	if len(splitFlav) == 1 {
 		return "flav"
 	}
 
 	return strings.ToLower(splitFlav[0])
+}
+
+func notContains(slice []string, item string) bool {
+	return !contains(slice, item)
 }
 
 func contains(slice []string, item string) bool {
