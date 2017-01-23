@@ -25,6 +25,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/sanbornm/go-selfupdate/selfupdate"
+	"os"
 )
 
 // self-updateCmd represents the self-update command
@@ -33,18 +34,24 @@ var selfUpdateCmd = &cobra.Command{
 	Short: "Update Rome if a new version exists",
 	Long: `This will allow Rome to update it's self like copmoser or other new fangled tools do`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("self-update called")
 		var updater = &selfupdate.Updater{
 			CurrentVersion: Version,
 			ApiURL:         "http://h2ik.co/",
 			BinURL:         "http://h2ik.co/",
-			DiffURL:        "http://h2ik.co/",
-			Dir:            "update/",
+			DiffURL:        "",
+			Dir:            ".rome_update_check/",
+			ForceCheck:	true,
 			CmdName:        "rome", // app name
 		}
 
-		updater.BackgroundRun()
+		fmt.Println("Running Self Update")
+		err := updater.BackgroundRun()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(4)
+		}
+
+		fmt.Println("Self Update Finished")
 	},
 }
 

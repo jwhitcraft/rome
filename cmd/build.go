@@ -83,7 +83,7 @@ var buildCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		if clean {
 			fmt.Println("Cleaning " + destination)
-			err := build.CleanBuild(destination)
+			err := build.CleanBuild(build.TargetDirectory{Path: destination})
 			if err != nil {
 				fmt.Println("Could Not Clean: " + destination)
 				os.Exit(1)

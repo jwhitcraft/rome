@@ -30,6 +30,9 @@ clean:
 	if [ -f ./${BINARY} ] ; then rm ${BINARY} ; fi
 	if [ -d ./packages ] ; then rm ./packages/* ; fi
 
+test:
+	go test -v `glide novendor`
+
 ##### LINUX BUILDS #####
 linux: packages/linux_arm.tar.gz packages/linux_arm64.tar.gz packages/linux_amd64.tar.gz
 
