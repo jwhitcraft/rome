@@ -10,7 +10,16 @@ curl -L http://h2ik.co/rome/rome-`uname -s`-`uname -m` -o /usr/local/bin/rome; c
 To update rome, just run `rome self-update`
 
 ## Usage
-`rome build --version=7.9.0.0 --flavor=ent --destination=/tmp/sugar-build /path/to/mango/checkout`
+
+### Build
+This command will build all the files inside of the source directory
+
+`rome build --version=7.9.0.0 --flavor=ent --destination=/tmp/sugar-build /path/to/mango/checkout/sugarcrm`
+
+### Watch
+This command will keep a process running and build each file as it's created or modified (experimental!)
+
+`rome watch --version=7.9.0.0 --flavor=ent --destinations=/tmp/sugar-build /path/to/mango/checkout/sugarcrm`
 
 ## Help
 `rome help build`
