@@ -27,7 +27,6 @@ import (
 	"sync"
 	"strings"
 	"os"
-	"path"
 	"time"
 	"path/filepath"
 	"github.com/jwhitcraft/rome/utils"
