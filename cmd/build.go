@@ -42,7 +42,7 @@ var (
 
 	clean bool = false
 
-	fileWorkers int = 40
+	fileWorkers int = 80
 	fileBufferSize int = 4096
 
 	linkWorkers int = 5
@@ -57,11 +57,16 @@ type Link struct {
 
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
-	Use:   "build [FLAGS] SOURCE-FOLDER",
+	Use:   "build",
 	Short: "Build SugarCRM",
+	Example: "rome build -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
 	ValidArgs: []string{"source"},
 	Long: `This will take a source version of Sugar and substitute out all the necessary build tags and create an
-	installable copy of Sugar for you to use and dev on.`,
+installable copy of Sugar for you to use and dev on.
+
+By default this will ignore sugarcrm/node_modules, but build sugarcrm/sidecar/node_modules to save on time since the
+node_modules are not required inside of SugarCRM but are for Sidecar.
+`,
 	PreRun: func(cmd *cobra.Command, args[]string) {
 		// in the preRun, make sure that the source and destination exists
 		source = args[0]
@@ -149,7 +154,7 @@ func init() {
 	buildCmd.Flags().StringVarP(&flavor, "flavor", "f", "ent","What Flavor of SugarCRM to build")
 	buildCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
 
-	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 40, "Number of Workers to start for processing files")
+	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 80, "Number of Workers to start for processing files")
 	buildCmd.Flags().IntVar(&fileBufferSize, "file-buffer-size", 4096, "Size of the file buffer before it gets reset")
 
 	buildCmd.Flags().IntVar(&linkWorkers, "symlink-workers", 5, "Number of workers to start for processing symlinks")

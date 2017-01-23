@@ -26,3 +26,5 @@ _testmain.go
 
 packages/*
 public/*
+
+./rome
