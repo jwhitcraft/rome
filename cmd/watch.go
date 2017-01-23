@@ -23,13 +23,11 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/rjeczalik/notify"
-	"os"
 	"github.com/jwhitcraft/rome/build"
-	"strings"
-	"path/filepath"
 )
 
 // watchCmd represents the watch command
@@ -78,9 +76,9 @@ var watchCmd = &cobra.Command{
 			case notify.Create:
 				fallthrough
 			case notify.Write:
-				log.Printf("Building %s", file.Path())
-				shortPath := strings.Replace(file.Path(), source, "", -1)
-				build.BuildFile(file.Path(), filepath.Join(destination, shortPath), flavor, version)
+				f := build.CreateFile(file.Path())
+				f.SetDestination(source, destination)
+				f.Process(flavor, version)
 			default:
 				log.Printf("%s is not handled yet, moving along", file.Event().String())
 			}
