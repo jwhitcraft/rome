@@ -1,6 +1,8 @@
-hash: 6acfdf31bc497d3aabb1c234873da9b53735c16034c247cbd9d4eba025014728
-updated: 2017-01-23T11:22:34.934224674-05:00
+hash: 26885558ddb4c741d8b63a6cf707e81a37a9b6c2076e547bd13193b625e35ffe
+updated: 2017-01-24T10:24:00.694659452-05:00
 imports:
+- name: github.com/fatih/color
+  version: 42c364ba490082e4815b5222728711b3440603eb
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/hashicorp/hcl

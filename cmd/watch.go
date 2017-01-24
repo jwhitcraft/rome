@@ -28,6 +28,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/rjeczalik/notify"
 	"github.com/jwhitcraft/rome/build"
+	"github.com/fatih/color"
+	"strings"
 )
 
 // watchCmd represents the watch command
@@ -62,25 +64,36 @@ var watchCmd = &cobra.Command{
 
 		// Set up a watchpoint listening for events within a directory tree rooted
 		// at current working directory. Dispatch remove events to c.
-		if err := notify.Watch(source + "/...", c, notify.All); err != nil {
+		if err := notify.Watch(source + "/...", c, notify.Create, notify.Write, notify.Rename); err != nil {
 			log.Fatal(err)
 		}
 		defer notify.Stop(c)
 
-		fmt.Println("Starting Build Watcher, press ctrl+c to exit")
+		fmt.Printf("%v %v %v\n",
+			color.GreenString("Starting Build Watcher, press"),
+			color.RedString("ctrl+c"),
+			color.GreenString("to exit"))
 
 		// keep the looping open
 		for {
 			file := <-c
-			switch file.Event() {
-			case notify.Create:
-				fallthrough
-			case notify.Write:
-				f := build.CreateFile(file.Path())
-				f.SetDestination(source, destination)
-				f.Process(flavor, version)
-			default:
-				log.Printf("%s is not handled yet, moving along", file.Event().String())
+			// silly jetbrains and how it saves files
+			if !strings.Contains(file.Path(), "___jb_") {
+				switch file.Event() {
+				case notify.Create:
+					fallthrough
+				case notify.Rename:
+					fallthrough
+				case notify.Write:
+					f := build.CreateFile(file.Path())
+					f.SetDestination(source, destination)
+					f.Process(flavor, version)
+					log.Printf("%v %s",
+						color.GreenString("[Built]"),
+						f.DestinationPath)
+				default:
+					log.Printf("%s is not handled yet, moving along", file.Event().String())
+				}
 			}
 
 		}
