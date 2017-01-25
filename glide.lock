@@ -1,5 +1,5 @@
 hash: 26885558ddb4c741d8b63a6cf707e81a37a9b6c2076e547bd13193b625e35ffe
-updated: 2017-01-24T10:24:00.694659452-05:00
+updated: 2017-01-25T11:22:22.906166415-05:00
 imports:
 - name: github.com/fatih/color
   version: 42c364ba490082e4815b5222728711b3440603eb
@@ -24,6 +24,10 @@ imports:
   version: 9955b0ab8708602d411341e55fffd7e0700f86bd
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+- name: github.com/mattn/go-isatty
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
 - name: github.com/mitchellh/mapstructure
   version: ed105d635dfa9ea7133f7c79f1eb36203fc3a156
 - name: github.com/pelletier/go-buffruneio
