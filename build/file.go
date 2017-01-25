@@ -61,6 +61,10 @@ func (f *File) SetDestination(source string, destination string) {
 	os.MkdirAll(path.Dir(f.DestinationPath), 0775)
 }
 
+func (f *File) GetDestination() string {
+	return f.DestinationPath
+}
+
 func CreateFile(path string) *File {
 	return &File{SourcePath: path}
 }

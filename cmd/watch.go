@@ -37,7 +37,7 @@ var watchCmd = &cobra.Command{
 	Use:   "watch",
 	Example: "rome watch -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
 	Short: "Watch for FS Changes and Built Out the files",
-	Long: `Currently Not Implmented, The plan is to create a utility like build monitor but inside of rome`,
+	Long: `Watch for file changes, and then build them as they happen.`,
 	PreRun: func(cmd *cobra.Command, args[]string) {
 		// in the preRun, make sure that the source and destination exists
 		source = args[0]
@@ -85,12 +85,7 @@ var watchCmd = &cobra.Command{
 				case notify.Rename:
 					fallthrough
 				case notify.Write:
-					f := build.CreateFile(file.Path())
-					f.SetDestination(source, destination)
-					f.Process(flavor, version)
-					log.Printf("%v %s",
-						color.GreenString("[Built]"),
-						f.DestinationPath)
+					fileChanged(build.CreateFile(file.Path()))
 				default:
 					log.Printf("%s is not handled yet, moving along", file.Event().String())
 				}
@@ -100,12 +95,24 @@ var watchCmd = &cobra.Command{
 	},
 }
 
+func fileChanged(file iFile) {
+	if cleanCache {
+		build.CleanCache(destination, cleanCacheItems)
+	}
+	file.SetDestination(source, destination)
+	file.Process(flavor, version)
+	log.Printf("%v %s",
+		color.GreenString("[Built]"),
+		file.GetDestination())
+}
+
 func init() {
 	RootCmd.AddCommand(watchCmd)
 
 	watchCmd.Flags().StringVarP(&destination,"destination", "d", "", "Where should the built files be put")
-	watchCmd.Flags().StringVarP(&version, "version", "v", "","What Version is being built")
+	watchCmd.Flags().StringVarP(&version, "version", "v", "","Specifies the version number to include in the build. All references in the application to a \"version number\" will indicate whatever version is specified.")
 	watchCmd.Flags().StringVarP(&flavor, "flavor", "f", "ent","What Flavor of SugarCRM to build")
+	watchCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
 	watchCmd.MarkFlagRequired("version")
 	watchCmd.MarkFlagRequired("flavor")

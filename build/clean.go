@@ -3,6 +3,7 @@ package build
 import (
 	"os"
 	"path/filepath"
+	"fmt"
 )
 
 type TargetDirectory struct {
@@ -33,5 +34,19 @@ func CleanBuild(dir Directory) error {
 			return err
 		}
 	}
+	return nil
+}
+
+func CleanCache(destination string, paths []string) error {
+	for _, item := range paths {
+		pathToClean := TargetDirectory{Path: filepath.Join(destination, "cache", item)}
+		err := CleanBuild(pathToClean)
+		// ignore if the file is missing
+		if err != nil && !os.IsNotExist(err) {
+			fmt.Printf("Could Not Clean: %s :: %s\n", item, err.Error())
+			return err
+		}
+	}
+
 	return nil
 }
