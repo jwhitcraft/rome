@@ -1,5 +1,5 @@
 # rome
-A new build system for SugarCRM
+A new build system for SugarCRM [![Build Status](https://travis-ci.org/jwhitcraft/rome.svg?branch=master)](https://travis-ci.org/jwhitcraft/rome)
 
 ## Installing
 ```shell
