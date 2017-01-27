@@ -28,3 +28,14 @@ This command will keep a process running and build each file as it's created or 
 Make sure that you have golang installed
 
 `make clean; make -e VERSION=2.0.0AlphaX`
+
+## docker
+Build the docker image:
+```
+docker build -t registry.sugarcrm.net/rome:latest .
+```
+
+Generate a build using the docker image and volume mounts:
+```
+docker run -it --rm -v /path/to/mango/sugarcrm:/sugarcrm -v /tmp/sugarcrm-build:/sugarcrm-build --name rome registry.sugarcrm.net/rome:latest go-wrapper run build /sugarcrm -d /sugarcrm-build -f ent -v 7.8.0.0
+```
