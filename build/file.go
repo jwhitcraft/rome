@@ -4,7 +4,6 @@ package build
 import (
 	"fmt"
 	"os"
-	"bytes"
 	"bufio"
 	"strings"
 	"regexp"
@@ -12,17 +11,22 @@ import (
 	"path"
 
 	"github.com/jwhitcraft/rome/utils"
+	"path/filepath"
 )
 
 var (
-	ProcessibleExtensions = []string{
-		"php", "json", "js",
+	ProcessableExtensions = []string{
+		".php", ".json", ".js",
 	}
 	Flavors = map[string][]string{
 		"pro": {"pro"},
 		"corp": {"pro", "corp"},
-		"ent": {"pro", "corp", "ent"},
-		"ult": {"pro", "corp", "ent", "ult"},
+		"ent": {"pro", "ent"},
+		"ult": {"pro", "ent", "ult"},
+	}
+
+	License = map[string][]string {
+		"lic": {"sub"},
 	}
 
 	TagRegex = regexp.MustCompile("//[[:space:]]*(BEGIN|END|FILE|ELSE)[[:space:]]*SUGARCRM[[:space:]]*(.*) ONLY")
@@ -30,9 +34,86 @@ var (
 	VarRegex = regexp.MustCompile( "@_SUGAR_(FLAV|VERSION)")
 )
 
-func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion string) bool {
+type File struct {
+	SourcePath string
+	DestinationPath string
+	linkTarget string
+}
+
+func (f *File) Process(flavor string, version string) bool {
+	if f.linkTarget == "" {
+		return processFile(f.SourcePath, f.DestinationPath, flavor, version)
+	} else {
+		return f.link()
+	}
+}
+
+func (f *File) link() bool {
+	// this will create the symlink
+	fmt.Printf("Creating SymLink %s\n", f.linkTarget)
+	os.Symlink(f.linkTarget, f.DestinationPath)
+	return true
+}
+
+func (f *File) SetDestination(source string, destination string) {
+	shortPath := strings.Replace(string(f.SourcePath), source, "", -1)
+	f.DestinationPath = filepath.Join(destination, shortPath)
+	os.MkdirAll(path.Dir(f.DestinationPath), 0775)
+}
+
+func (f *File) GetDestination() string {
+	return f.DestinationPath
+}
+
+func CreateFile(path string) *File {
+	return &File{SourcePath: path}
+}
+
+func CreateSymLink(path, target string) *File {
+	return &File{SourcePath: path, linkTarget: target}
+}
+
+func processBuildTag(tag string, flavors []string ) bool {
+	// first things first, check for &&
+	tags := strings.Split(tag, "&&")
+	ok := true
+	for _, tag := range tags {
+		tag = strings.TrimSpace(tag)
+		tagSep := getTagSperator(tag)
+		tagKey, tagVal := splitTag(tag, tagSep)
+
+		var testValue []string
+		var tagOk bool
+		// default the tag to be allowed, only change it something else is off
+		switch tagKey {
+		case "flav":
+			testValue = flavors
+		case "lic":
+			testValue = License[tagKey]
+		}
+		if tagSep == "!=" {
+			tagOk = notContains(testValue, tagVal)
+		} else {
+			tagOk = contains(testValue, tagVal)
+		}
+		ok = ok && tagOk
+	}
+
+	return ok
+}
+
+func getTagSperator(tag string) string {
+	if strings.Contains(tag, "!=") {
+		return "!="
+	}
+
+	return "="
+}
+
+func processFile(srcPath string, destPath string, buildFlavor string, buildVersion string) bool {
 	var useLine bool = true
 	var shouldProcess bool = false
+	var canProcess bool = false
 
 	var skippedLines utils.Counter
 
@@ -42,12 +123,10 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 	// var fileName string = path.Base(destPath)
 	os.MkdirAll(destFolder, 0775)
 
-	var canProcess bool = contains(ProcessibleExtensions, fileExt)
-
 	// regardless, if the file is in the node_modules folder
 	// don't try and process it
-	if strings.Contains(destFolder, "node_modules") {
-		canProcess = false
+	if !strings.Contains(destFolder, "node_modules") {
+		canProcess = contains(ProcessableExtensions, fileExt)
 	}
 
 	// first load the whole file to check for the build tags
@@ -58,8 +137,7 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 		// check to see if it's a type of FILE
 		matches := TagRegex.FindStringSubmatch(fileString)
 		if matches[1] == "FILE" {
-			tagFlav := getTagFlavor(matches[2])
-			tagOk := contains(Flavors[buildFlavor], tagFlav)
+			tagOk := processBuildTag(matches[2], Flavors[buildFlavor])
 			//fmt.Printf("// File Tag Found for flavor: %s and building %s, should build file: %t\n", tagFlav, buildFlavor, tagOk)
 			if tagOk == false {
 				return false
@@ -69,13 +147,8 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 
 	// do the variable replacement
 	if canProcess && VarRegex.MatchString(fileString) {
-		matches := VarRegex.FindStringSubmatch(fileString)
-		switch matches[1] {
-		case "VERSION":
-			fileString = strings.Replace(fileString, "@_SUGAR_VERSION", buildVersion, -1)
-		case "FLAV":
-			fileString = strings.Replace(fileString, "@_SUGAR_FLAV", buildFlavor, -1)
-		}
+		fileString = strings.Replace(fileString, "@_SUGAR_VERSION", buildVersion, -1)
+		fileString = strings.Replace(fileString, "@_SUGAR_FLAV", buildFlavor, -1)
 	}
 
 
@@ -88,7 +161,7 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 	defer fw.Close()
 
 	if shouldProcess {
-		f := bytes.NewReader(fileBytes)
+		f := strings.NewReader(fileString)
 		if err != nil {
 			fmt.Printf("error opening file: %v\n",err)
 			os.Exit(1)
@@ -104,20 +177,15 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 
 				switch matches[1] {
 				case "BEGIN":
-					tagFlav := getTagFlavor(matches[2])
-					tagOk := contains(Flavors[buildFlavor], tagFlav)
-					//fmt.Printf("// Begin Tag Found for flavor: %s and building %s, should use lines: %t\n", tagFlav, buildFlavor, tagOk)
-					useLine = tagOk
-					if tagOk == false {
+					useLine = processBuildTag(matches[2], Flavors[buildFlavor])
+					if !useLine {
 						skippedLines.Increment()
 					}
 				case "END":
-					//fmt.Printf("// Skipped %d lines\n", skippedLines.get())
 					skippedLines.Reset()
 					useLine = true
 				}
 			} else if useLine {
-				fmt.Println(val) // Println will add back the final '\n'
 				fmt.Fprintln(writer, val)
 			} else {
 				skippedLines.Increment()
@@ -136,13 +204,23 @@ func BuildFile(srcPath string, destPath string, buildFlavor string, buildVersion
 	return true
 }
 
-func getTagFlavor(eval string) string {
-	splitFlav := strings.Split(eval, "=")
-	if len(splitFlav) == 1 {
-		return strings.ToLower(splitFlav[0])
+func splitTag(eval string, splitOn string) (key string, val string) {
+	splitVal := strings.Split(eval, splitOn)
+
+	// if the value only has item in it after split, assume it's the value not the key
+	if len(splitVal) == 1 {
+		key = "flav"
+		val = splitVal[0]
+	} else {
+		key = splitVal[0]
+		val = splitVal[1]
 	}
 
-	return strings.ToLower(splitFlav[1])
+	return strings.ToLower(key), strings.ToLower(val)
+}
+
+func notContains(slice []string, item string) bool {
+	return !contains(slice, item)
 }
 
 func contains(slice []string, item string) bool {

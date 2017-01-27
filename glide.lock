@@ -1,12 +1,72 @@
-hash: 6c1428dc2351ee6ba64113b440757edd87283e923650586709ceec9555515020
-updated: 2017-01-22T18:49:22.644851635-05:00
+hash: 26885558ddb4c741d8b63a6cf707e81a37a9b6c2076e547bd13193b625e35ffe
+updated: 2017-01-25T11:22:22.906166415-05:00
 imports:
+- name: github.com/fatih/color
+  version: 42c364ba490082e4815b5222728711b3440603eb
+- name: github.com/fsnotify/fsnotify
+  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/hashicorp/hcl
+  version: 39fa3a62ba92cf550eb0f9cfb84757ef79b8aa30
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/kardianos/osext
+  version: 6e7f843663477789fac7c02def0d0909e969b4e5
+- name: github.com/kr/binarydist
+  version: 9955b0ab8708602d411341e55fffd7e0700f86bd
+- name: github.com/magiconair/properties
+  version: b3b15ef068fd0b17ddf408a23669f20811d194d2
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+- name: github.com/mattn/go-isatty
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+- name: github.com/mitchellh/mapstructure
+  version: ed105d635dfa9ea7133f7c79f1eb36203fc3a156
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+- name: github.com/pelletier/go-toml
+  version: a1f048ba24490f9b0674a67e1ce995d685cddf4a
+- name: github.com/rjeczalik/notify
+  version: b8dab33f409f63a90858d0eff0da94ed1a692b66
 - name: github.com/sanbornm/go-selfupdate
   version: bf295275fb1ee4e347c09330ed9a3c76cc19895a
   subpackages:
   - selfupdate
+- name: github.com/spf13/afero
+  version: 72b31426848c6ef12a7a8e216708cb0d1530f074
+  subpackages:
+  - mem
+- name: github.com/spf13/cast
+  version: 56a7ecbeb18dde53c6db4bd96b541fd9741b8d44
 - name: github.com/spf13/cobra
   version: dc208f4211e7f6df7ec8cb62640f57d3e154910d
+- name: github.com/spf13/jwalterweatherman
+  version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
+- name: github.com/spf13/pflag
+  version: a232f6d9f87afaaa08bafaff5da685f974b83313
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+- name: golang.org/x/sys
+  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: 11dbc599981ccdf4fb18802a28392a8bcf7a9395
+  subpackages:
+  - transform
+  - unicode/norm
+- name: gopkg.in/inconshreveable/go-update.v0
+  version: d8b0b1d421aa1cbf392c05869f8abbc669bb7066
+  subpackages:
+  - download
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

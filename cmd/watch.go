@@ -22,28 +22,97 @@ package cmd
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/rjeczalik/notify"
+	"github.com/jwhitcraft/rome/build"
+	"github.com/fatih/color"
+	"strings"
 )
 
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
-	Use:   "watch [OPTIONS] SOURCE-PATH",
+	Use:   "watch",
+	Example: "rome watch -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
 	Short: "Watch for FS Changes and Built Out the files",
-	Long: `Currently Not Implmented, The plan is to create a utility like build monitor but inside of rome`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("Nothing to see hear yet")
+	Long: `Watch for file changes, and then build them as they happen.`,
+	PreRun: func(cmd *cobra.Command, args[]string) {
+		// in the preRun, make sure that the source and destination exists
+		source = args[0]
+
+		destExists, err := exists(destination)
+		if err != nil || !destExists {
+			fmt.Printf("Destination Path (%s) does not exists, Creating Now\n", destination)
+			os.MkdirAll(destination, 0775)
+			// since we had to create the destination dir, set clean to false
+			clean = false
+		}
+
+		sourceExists, err := exists(source)
+		if err != nil || !sourceExists {
+			fmt.Printf("\n\nSource Path (%s) does not exists!!\n\n", source)
+			os.Exit(401)
+		}
 	},
+
+	Run: func(cmd *cobra.Command, args []string) {
+		// Make the channel buffered to ensure no event is dropped. Notify will drop
+		// an event if the receiver is not able to keep up the sending pace.
+		c := make(chan notify.EventInfo, 1)
+
+		// Set up a watchpoint listening for events within a directory tree rooted
+		// at current working directory. Dispatch remove events to c.
+		if err := notify.Watch(source + "/...", c, notify.Create, notify.Write, notify.Rename); err != nil {
+			log.Fatal(err)
+		}
+		defer notify.Stop(c)
+
+		fmt.Printf("%v %v %v\n",
+			color.GreenString("Starting Build Watcher, press"),
+			color.RedString("ctrl+c"),
+			color.GreenString("to exit"))
+
+		// keep the looping open
+		for {
+			file := <-c
+			// silly jetbrains and how it saves files
+			if !strings.Contains(file.Path(), "___jb_") {
+				switch file.Event() {
+				case notify.Create:
+					fallthrough
+				case notify.Rename:
+					fallthrough
+				case notify.Write:
+					fileChanged(build.CreateFile(file.Path()))
+				default:
+					log.Printf("%s is not handled yet, moving along", file.Event().String())
+				}
+			}
+
+		}
+	},
+}
+
+func fileChanged(file iFile) {
+	if cleanCache {
+		build.CleanCache(destination, cleanCacheItems)
+	}
+	file.SetDestination(source, destination)
+	file.Process(flavor, version)
+	log.Printf("%v %s",
+		color.GreenString("[Built]"),
+		file.GetDestination())
 }
 
 func init() {
 	RootCmd.AddCommand(watchCmd)
 
 	watchCmd.Flags().StringVarP(&destination,"destination", "d", "", "Where should the built files be put")
-	watchCmd.Flags().StringVarP(&version, "version", "v", "","What Version is being built")
+	watchCmd.Flags().StringVarP(&version, "version", "v", "","Specifies the version number to include in the build. All references in the application to a \"version number\" will indicate whatever version is specified.")
 	watchCmd.Flags().StringVarP(&flavor, "flavor", "f", "ent","What Flavor of SugarCRM to build")
-	watchCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
+	watchCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
 	watchCmd.MarkFlagRequired("version")
 	watchCmd.MarkFlagRequired("flavor")

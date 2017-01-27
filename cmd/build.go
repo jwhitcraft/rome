@@ -27,7 +27,6 @@ import (
 	"sync"
 	"strings"
 	"os"
-	"path"
 	"time"
 	"path/filepath"
 	"github.com/jwhitcraft/rome/utils"
@@ -42,26 +41,34 @@ var (
 
 	clean bool = false
 
-	fileWorkers int = 40
+	cleanCache bool = false
+
+	fileWorkers int = 80
 	fileBufferSize int = 4096
 
-	linkWorkers int = 5
-	linkBufferSize int = 2048
+	cleanCacheItems = []string{"file_map.php", "api", "jsLanguage",
+		"modules", "smarty", "Expressions", "blowfish", "dashlets",
+		"include/api", "javascript", "include/javascript"}
 )
 
-type File string
-type Link struct {
-	Link string
-	Target string
+type iFile interface {
+	Process(flavor string, version string) bool
+	SetDestination(source string, destination string)
+	GetDestination() string
 }
 
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
-	Use:   "build [FLAGS] SOURCE-FOLDER",
+	Use:   "build",
 	Short: "Build SugarCRM",
+	Example: "rome build -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
 	ValidArgs: []string{"source"},
 	Long: `This will take a source version of Sugar and substitute out all the necessary build tags and create an
-	installable copy of Sugar for you to use and dev on.`,
+installable copy of Sugar for you to use and dev on.
+
+By default this will ignore sugarcrm/node_modules, but build sugarcrm/sidecar/node_modules to save on time since the
+node_modules are not required inside of SugarCRM but are for Sidecar.
+`,
 	PreRun: func(cmd *cobra.Command, args[]string) {
 		// in the preRun, make sure that the source and destination exists
 		source = args[0]
@@ -82,32 +89,30 @@ var buildCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if clean {
-			fmt.Println("Cleaning " + destination)
-			err := build.CleanBuild(destination)
+			err := build.CleanBuild(build.TargetDirectory{Path: destination})
 			if err != nil {
 				fmt.Println("Could Not Clean: " + destination)
-				os.Exit(1)
+				os.Exit(410)
+			}
+		} else if cleanCache {
+			// only clean the cache if a full clean didn't happen
+			err := build.CleanCache(destination, cleanCacheItems)
+			if err != nil {
+				os.Exit(411)
 			}
 		}
 		source = args[0]
 		fmt.Println("Starting Rome on " + source + "...")
 		defer utils.TimeTrack(time.Now())
 		var builtFiles utils.Counter
-		files := make(chan File, fileBufferSize)
-		links := make(chan Link, linkBufferSize)
+		files := make(chan iFile, fileBufferSize)
 		quit := make(chan bool)
 		var wg sync.WaitGroup
-		var linkWg sync.WaitGroup
 
 		// spawn 5 workers
 		for i := 0; i < fileWorkers; i++ {
 			wg.Add(1)
 			go fileWorker(files, quit, &wg)
-		}
-
-		for i := 0; i < linkWorkers; i++ {
-			linkWg.Add(1)
-			go linkWorker(links, quit, &linkWg)
 		}
 
 		filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
@@ -120,9 +125,9 @@ var buildCmd = &cobra.Command{
 				// handle symlinks differently than normal files
 				if f.Mode()&os.ModeSymlink != 0 {
 					originFile, _ := os.Readlink(path)
-					links <- Link{Link: path, Target: originFile}
+					files <- build.CreateSymLink(path, originFile)
 				} else {
-					files <- File(path)
+					files <- build.CreateFile(path)
 				}
 			}
 			return nil
@@ -130,12 +135,10 @@ var buildCmd = &cobra.Command{
 
 		// end of tasks. the workers should quit afterwards
 		close(files)
-		close(links)
 		// use "close(quit)", if you do not want to wait for the remaining tasks
 
 		// wait for all workers to shut down properly
 		wg.Wait()
-		linkWg.Wait()
 
 		fmt.Printf("Built %d files", builtFiles.Get())
 	},
@@ -148,12 +151,10 @@ func init() {
 	buildCmd.Flags().StringVarP(&version, "version", "v", "","What Version is being built")
 	buildCmd.Flags().StringVarP(&flavor, "flavor", "f", "ent","What Flavor of SugarCRM to build")
 	buildCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
+	buildCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
-	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 40, "Number of Workers to start for processing files")
+	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 80, "Number of Workers to start for processing files")
 	buildCmd.Flags().IntVar(&fileBufferSize, "file-buffer-size", 4096, "Size of the file buffer before it gets reset")
-
-	buildCmd.Flags().IntVar(&linkWorkers, "symlink-workers", 5, "Number of workers to start for processing symlinks")
-	buildCmd.Flags().IntVar(&linkBufferSize, "symlink-buffer-size", 2048, "Size of the symlink buffer before it gets reset")
 
 	buildCmd.MarkFlagRequired("version")
 	buildCmd.MarkFlagRequired("flavor")
@@ -169,7 +170,7 @@ func exists(path string) (bool, error) {
 	return true, err
 }
 
-func fileWorker(files <-chan File, quit <-chan bool, wg *sync.WaitGroup) {
+func fileWorker(files <-chan iFile, quit <-chan bool, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		select {
@@ -177,27 +178,8 @@ func fileWorker(files <-chan File, quit <-chan bool, wg *sync.WaitGroup) {
 			if !ok {
 				return
 			}
-			shortPath := strings.Replace(string(file), source, "", -1)
-			finalDestination := destination + string(filepath.Separator) + shortPath
-			build.BuildFile(string(file), finalDestination, flavor, version)
-		case <-quit:
-			return
-		}
-	}
-}
-
-func linkWorker(links <- chan Link, quit <- chan bool, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		select {
-		case link, ok := <-links:
-			if !ok {
-				return
-			}
-			shortPath := strings.Replace(string(link.Link), source, "", -1)
-			finalDestination := destination + string(filepath.Separator) + shortPath
-			os.MkdirAll(path.Dir(finalDestination), 0775)
-			os.Symlink(link.Target, destination)
+			file.SetDestination(source, destination)
+			file.Process(flavor, version)
 		case <-quit:
 			return
 		}
