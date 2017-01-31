@@ -16,7 +16,7 @@ import (
 
 var (
 	ProcessableExtensions = []string{
-		".php", ".json", ".js",
+		".php", ".json", ".js", ".html", ".tpl", ".css", ".hbs",
 	}
 	Flavors = map[string][]string{
 		"pro": {"pro"},
@@ -29,7 +29,9 @@ var (
 		"lic": {"sub"},
 	}
 
-	TagRegex = regexp.MustCompile("//[[:space:]]*(BEGIN|END|FILE|ELSE)[[:space:]]*SUGARCRM[[:space:]]*(.*) ONLY")
+	TagRegex = regexp.MustCompile("(?i)//[[:space:]]*(BEGIN|END|FILE|ELSE)[[:space:]]*SUGARCRM[[:space:]]*(.*) ONLY")
+
+	IdRegex = regexp.MustCompile(`\$Id(.*)\$`)
 
 	VarRegex = regexp.MustCompile( "@_SUGAR_(FLAV|VERSION)")
 )
@@ -50,7 +52,6 @@ func (f *File) Process(flavor string, version string) bool {
 
 func (f *File) link() bool {
 	// this will create the symlink
-	fmt.Printf("Creating SymLink %s\n", f.linkTarget)
 	os.Symlink(f.linkTarget, f.DestinationPath)
 	return true
 }
@@ -78,28 +79,46 @@ func processBuildTag(tag string, flavors []string ) bool {
 	tags := strings.Split(tag, "&&")
 	ok := true
 	for _, tag := range tags {
-		tag = strings.TrimSpace(tag)
-		tagSep := getTagSperator(tag)
-		tagKey, tagVal := splitTag(tag, tagSep)
 
-		var testValue []string
 		var tagOk bool
-		// default the tag to be allowed, only change it something else is off
-		switch tagKey {
-		case "flav":
-			testValue = flavors
-		case "lic":
-			testValue = License[tagKey]
-		}
-		if tagSep == "!=" {
-			tagOk = notContains(testValue, tagVal)
+		if strings.Contains(tag, "||") {
+			// split on the ||
+			var orOk bool
+			orTags := strings.Split(tag, "||")
+			for _, orTag := range orTags {
+				orOk = orOk || getTagBooleanValue(orTag, flavors)
+			}
+			tagOk = orOk
 		} else {
-			tagOk = contains(testValue, tagVal)
+			tagOk = getTagBooleanValue(tag, flavors)
 		}
+
 		ok = ok && tagOk
 	}
 
 	return ok
+}
+
+func getTagBooleanValue(tag string, flavors []string) bool {
+	tag = strings.TrimSpace(tag)
+	tagSep := getTagSperator(tag)
+	tagKey, tagVal := splitTag(tag, tagSep)
+
+	var testValue []string
+	// default the tag to be allowed, only change it something else is off
+	switch tagKey {
+	case "flav":
+		testValue = flavors
+	case "lic":
+		testValue = License[tagKey]
+	case "dep":
+		testValue = []string{"os"}
+	}
+	if tagSep == "!=" {
+		return notContains(testValue, tagVal)
+	}
+
+	return contains(testValue, tagVal)
 }
 
 func getTagSperator(tag string) string {
@@ -185,6 +204,8 @@ func processFile(srcPath string, destPath string, buildFlavor string, buildVersi
 					skippedLines.Reset()
 					useLine = true
 				}
+			} else if IdRegex.MatchString(val) {
+				fmt.Fprintln(writer, "")
 			} else if useLine {
 				fmt.Fprintln(writer, val)
 			} else {
@@ -204,7 +225,7 @@ func processFile(srcPath string, destPath string, buildFlavor string, buildVersi
 	return true
 }
 
-func splitTag(eval string, splitOn string) (key string, val string) {
+func splitTag(eval, splitOn string) (key, val string) {
 	splitVal := strings.Split(eval, splitOn)
 
 	// if the value only has item in it after split, assume it's the value not the key
@@ -216,7 +237,7 @@ func splitTag(eval string, splitOn string) (key string, val string) {
 		val = splitVal[1]
 	}
 
-	return strings.ToLower(key), strings.ToLower(val)
+	return strings.TrimSpace(strings.ToLower(key)), strings.TrimSpace(strings.ToLower(val))
 }
 
 func notContains(slice []string, item string) bool {

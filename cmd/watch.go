@@ -36,7 +36,8 @@ import (
 var watchCmd = &cobra.Command{
 	Use:   "watch",
 	Example: "rome watch -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
-	Short: "Watch for FS Changes and Built Out the files",
+	Args: validSourceArg,
+	Short: "Watch the file system for changes and built any files that change",
 	Long: `Watch for file changes, and then build them as they happen.`,
 	PreRun: func(cmd *cobra.Command, args[]string) {
 		// in the preRun, make sure that the source and destination exists
@@ -78,7 +79,9 @@ var watchCmd = &cobra.Command{
 		for {
 			file := <-c
 			// silly jetbrains and how it saves files
-			if !strings.Contains(file.Path(), "___jb_") {
+			if !strings.Contains(file.Path(), "___jb_") &&
+				!isExcluded(strings.Replace(file.Path(), source, "", -1), flavor) {
+
 				switch file.Event() {
 				case notify.Create:
 					fallthrough

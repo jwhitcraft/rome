@@ -197,7 +197,7 @@ func genMan(cmd *cobra.Command, header *GenManHeader) []byte {
 	manPrintOptions(buf, cmd)
 	if len(cmd.Example) > 0 {
 		fmt.Fprintf(buf, "# EXAMPLE\n")
-		fmt.Fprintf(buf, "```\n%s\n```\n", cmd.Example)
+		fmt.Fprintf(buf, "\n%s\n\n", cmd.Example)
 	}
 	if hasSeeAlso(cmd) {
 		fmt.Fprintf(buf, "# SEE ALSO\n")

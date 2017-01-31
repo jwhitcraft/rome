@@ -57,10 +57,24 @@ type iFile interface {
 	GetDestination() string
 }
 
+func validSourceArg(cmd *cobra.Command, args []string)  error {
+	if err := cobra.ExactArgs(1)(cmd, args); err != nil {
+		return err
+	}
+
+	sourceExists, err := exists(args[0])
+	if err != nil || !sourceExists {
+		return fmt.Errorf("Source Path (%s) does not exists, please verify that it exists\n", args[0])
+	}
+
+	return nil
+}
+
 // buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build SugarCRM",
+	Args: validSourceArg,
 	Example: "rome build -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
 	ValidArgs: []string{"source"},
 	Long: `This will take a source version of Sugar and substitute out all the necessary build tags and create an
@@ -120,7 +134,8 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 			if f.Name() == "node_modules" && strings.Contains(path, "sugarcrm/node_modules") {
 				return filepath.SkipDir
 			}
-			if !f.IsDir() {
+
+			if !f.IsDir() && !isExcluded(strings.Replace(path, source, "", -1), flavor) {
 				builtFiles.Increment()
 				// handle symlinks differently than normal files
 				if f.Mode()&os.ModeSymlink != 0 {

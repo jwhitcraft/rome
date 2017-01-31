@@ -27,6 +27,16 @@ func TestPrivateProcessBuildTag(t *testing.T) {
 	if processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be false, but got true for %s", flav)
 	}
+
+	flav = "flav = ent"
+	if !processBuildTag(flav, Flavors["ent"]) {
+		t.Errorf("Expected Value to be true, but got false for %s", flav)
+	}
+
+	flav = "flav=pro || flav=com"
+	if !processBuildTag(flav, Flavors["ent"]) {
+		t.Errorf("Expected Value to be true, but got false for %s", flav)
+	}
 }
 
 func TestPrivateSplitTag(t *testing.T) {

@@ -1,8 +1,8 @@
-hash: 26885558ddb4c741d8b63a6cf707e81a37a9b6c2076e547bd13193b625e35ffe
-updated: 2017-01-25T11:22:22.906166415-05:00
+hash: acf85001796970eb832f285ec5d235c350910fa5f3e2934adea535ae14bd429b
+updated: 2017-01-26T11:33:25.069103077-05:00
 imports:
 - name: github.com/fatih/color
-  version: 42c364ba490082e4815b5222728711b3440603eb
+  version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/hashicorp/hcl
@@ -47,7 +47,8 @@ imports:
 - name: github.com/spf13/cast
   version: 56a7ecbeb18dde53c6db4bd96b541fd9741b8d44
 - name: github.com/spf13/cobra
-  version: dc208f4211e7f6df7ec8cb62640f57d3e154910d
+  version: 5d13e8c9d917d962ffc593fb2529d281ae04a7fd
+  repo: https://github.com/dnephin/cobra.git
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag

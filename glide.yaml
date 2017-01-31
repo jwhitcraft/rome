@@ -3,7 +3,10 @@ import:
 - package: github.com/sanbornm/go-selfupdate
   subpackages:
   - selfupdate
-- package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: github.com/rjeczalik/notify
 - package: github.com/fatih/color
+  version: ^1.2.0
+- package: github.com/spf13/cobra
+  version: master
+  repo: https://github.com/dnephin/cobra.git
