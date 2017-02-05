@@ -19,15 +19,13 @@ message FileRequest {
 }
 
 message CreateSymLinkRequest {
-    string name = 1;
-    string orginal_file = 2;
+    string target = 1;
+    string origin_file = 2;
 }
 
 // The Response for when a file was built
 message FileResponse {
     string file = 1;
-    bool success = 2;
-    string error = 3;
 }
 
 message GetBuildAttrRequest {

@@ -30,7 +30,7 @@ func (s *SymLink) GetTarget() string {
 
 func (s *SymLink) SendToCesar(cesar pb.CesarClient) (*pb.FileResponse, error) {
 	return cesar.CreateSymLink(context.Background(), &pb.CreateSymLinkRequest{
-		Name:        s.Target,
-		OrginalFile: s.OriginFile,
+		Target:     s.Target,
+		OriginFile: s.OriginFile,
 	})
 }

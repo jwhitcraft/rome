@@ -56,6 +56,10 @@ var (
 		"modules", "smarty", "Expressions", "blowfish", "dashlets",
 		"include/api", "javascript", "include/javascript"}
 
+	remote_server        string
+	remote_server_port   string
+	remote_server_folder string
+
 	cesar pb.CesarClient
 )
 
@@ -95,12 +99,14 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 		// in the preRun, make sure that the source and destination exists
 		source = args[0]
 
-		destExists, err := exists(destination)
-		if err != nil || !destExists {
-			fmt.Printf("Destination Path (%s) does not exists, Creating Now\n", destination)
-			os.MkdirAll(destination, 0775)
-			// since we had to create the destination dir, set clean to false
-			clean = false
+		if destination != "" {
+			destExists, err := exists(destination)
+			if err != nil || !destExists {
+				fmt.Printf("Destination Path (%s) does not exists, Creating Now\n", destination)
+				os.MkdirAll(destination, 0775)
+				// since we had to create the destination dir, set clean to false
+				clean = false
+			}
 		}
 
 		sourceExists, err := exists(source)
@@ -110,19 +116,21 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		if clean {
-			fmt.Print("Cleaning " + source + " folder...")
-			err := build.CleanBuild(build.TargetDirectory{Path: destination})
-			if err != nil {
-				fmt.Println("Could Not Clean: " + destination)
-				os.Exit(410)
-			}
-			fmt.Println("Done")
-		} else if cleanCache {
-			// only clean the cache if a full clean didn't happen
-			err := build.CleanCache(destination, cleanCacheItems)
-			if err != nil {
-				os.Exit(411)
+		if destination != "" {
+			if clean {
+				fmt.Print("Cleaning " + destination + " folder...")
+				err := build.CleanBuild(build.TargetDirectory{Path: destination})
+				if err != nil {
+					fmt.Println("Could Not Clean: " + destination)
+					os.Exit(410)
+				}
+				fmt.Println("Done")
+			} else if cleanCache {
+				// only clean the cache if a full clean didn't happen
+				err := build.CleanCache(destination, cleanCacheItems)
+				if err != nil {
+					os.Exit(411)
+				}
 			}
 		}
 		source = args[0]
@@ -139,26 +147,20 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 		}
 
 		// connect to the server
-
-		conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+		var err error
+		cesar, err = createClient()
 		if err != nil {
-			fmt.Printf("did not connect: %v", err)
-			os.Exit(1)
+			fmt.Fprint(os.Stderr, err.Error())
+			os.Exit(500)
 		}
-		defer conn.Close()
-		cesar = pb.NewCesarClient(conn)
-
-		cesar.SetBuildAttributes(context.Background(), &pb.SetBuildAttrRequest{
-			Version: version,
-			Flavor:  flavor,
-			Folder:  "doh",
-			Clean:   clean,
-		})
 
 		filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
 			// ignore the node_modules dir in the root, but lead sidecar
 			if f.Name() == "node_modules" && strings.Contains(path, "sugarcrm/node_modules") {
 				return filepath.SkipDir
+			}
+			if f.Name() == ".DS_Store" {
+				return nil
 			}
 
 			if !f.IsDir() && !isExcluded(strings.Replace(path, source, "", -1), flavor) {
@@ -191,8 +193,12 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 }
 
 func convertToTargetPath(path string) string {
-	shortPath := strings.Replace(path, source, "", -1)
-	return filepath.Join(destination, shortPath)
+	newPath := strings.Replace(path, source, "", -1)
+	if cesar != nil {
+		newPath = filepath.Join(destination, newPath)
+	}
+
+	return newPath
 }
 
 func init() {
@@ -204,13 +210,37 @@ func init() {
 	buildCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
 	buildCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
+	buildCmd.Flags().StringVarP(&remote_server, "server", "s", "", "What server should we build to")
+	buildCmd.Flags().StringVar(&remote_server_port, "port", "47600", "What is the server port")
+	buildCmd.Flags().StringVarP(&remote_server_folder, "folder", "l", "", "What folder should we build to on the server, if left empty, it will build to a folder named <version><flavor>")
+
 	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 80, "Number of Workers to start for processing files")
 	buildCmd.Flags().IntVar(&fileBufferSize, "file-buffer-size", 4096, "Size of the file buffer before it gets reset")
 
 	buildCmd.MarkFlagRequired("version")
 	buildCmd.MarkFlagRequired("flavor")
-	buildCmd.MarkFlagRequired("destination")
 
+}
+
+func createClient() (pb.CesarClient, error) {
+	conn, err := grpc.Dial(remote_server+":"+remote_server_port, grpc.WithInsecure(), grpc.WithTimeout(10*time.Second))
+	if err != nil {
+		return nil, fmt.Errorf("Could not connect to remote server: %v", err)
+	}
+	client := pb.NewCesarClient(conn)
+
+	if remote_server_folder == "" {
+		remote_server_folder = fmt.Sprintf("%s%s", version, flavor)
+	}
+
+	client.SetBuildAttributes(context.Background(), &pb.SetBuildAttrRequest{
+		Version: version,
+		Flavor:  flavor,
+		Folder:  remote_server_folder,
+		Clean:   clean,
+	})
+
+	return client, nil
 }
 
 // exists returns whether the given file or directory exists or not
@@ -233,15 +263,19 @@ func fileWorker(files <-chan iFile, wg *sync.WaitGroup) {
 			if !ok {
 				return
 			}
-			err := file.Process(flavor, version)
-			if err != nil {
-				fmt.Printf("Error Building File: %v\n", err)
+			if cesar != nil {
+				f, err := file.SendToCesar(cesar)
+				if err != nil {
+					fmt.Printf("Error Building File: %s because %v\n", file.GetTarget(), err)
+				}
+				_ = f
+
+			} else {
+				err := file.Process(flavor, version)
+				if err != nil {
+					fmt.Printf("Error Building File: %v\n", err)
+				}
 			}
-			//f, _ := ioutil.ReadFile(file.GetSource())
-			//cesar.BuildFile(context.Background(), &pb.FileRequest{
-			//	Path:     file.GetSource(),
-			//	Contents: f,
-			//})
 		}
 	}
 }

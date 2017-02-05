@@ -29,6 +29,9 @@ clean:
 test:
 	go test -v `glide novendor`
 
+cesar:
+	protoc -I cesar/ cesar/cesar.proto --go_out=plugins=grpc:cesar
+
 ##### LINUX BUILDS #####
 linux: packages/linux_amd64.tar.gz
 

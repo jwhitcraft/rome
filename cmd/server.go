@@ -21,14 +21,18 @@
 package cmd
 
 import (
-	"log"
 	"net"
+
+	"github.com/go-kit/kit/log"
 
 	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"path/filepath"
+
+	"github.com/jwhitcraft/rome/build"
 	pb "github.com/jwhitcraft/rome/cesar"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
@@ -37,25 +41,49 @@ import (
 )
 
 const (
-	port = ":50051"
+	port = ":47600"
 )
 
 var (
 	attributes *pb.BuildAttrResponse
+	buildRoot  string
+	logger     log.Logger
 )
 
 type server struct{}
 
 func (s *server) BuildFile(ctx context.Context, in *pb.FileRequest) (*pb.FileResponse, error) {
-	return &pb.FileResponse{File: "/tmp/" + in.Path, Success: true}, nil
+	target := filepath.Join(buildRoot, attributes.Folder, in.Target)
+	logger.Log("msg", "Building File"+target)
+	file := build.CreateRemoteFile(target, in.Contents)
+	err := file.Process(attributes.Flavor, attributes.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.FileResponse{File: target}, nil
+
 }
 
 func (s *server) CreateSymLink(ctx context.Context, in *pb.CreateSymLinkRequest) (*pb.FileResponse, error) {
-	return &pb.FileResponse{File: "/tmp/" + in.OrginalFile, Success: true}, nil
+	target := filepath.Join(buildRoot, attributes.Folder, in.Target)
+	logger.Log("msg", "Building Symlink"+target)
+	file := build.CreateSymLink(target, in.OriginFile)
+	err := file.Process(attributes.Flavor, attributes.Version)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.FileResponse{File: target}, nil
 }
 
 func (s *server) SetBuildAttributes(ctx context.Context, in *pb.SetBuildAttrRequest) (*pb.BuildAttrResponse, error) {
 	attributes = &pb.BuildAttrResponse{Version: in.Version, Clean: in.Clean, Flavor: in.Flavor, Folder: in.Folder}
+
+	if attributes.Clean {
+		target := filepath.Join(buildRoot, attributes.Folder)
+		logger.Log("msg", fmt.Sprintf("Cleaning %s", target))
+		build.CleanBuild(build.TargetDirectory{Path: target})
+	}
 
 	return attributes, nil
 }
@@ -79,6 +107,10 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		logger = log.NewLogfmtLogger(os.Stdout)
+		logger = log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
+		logger.Log("msg", fmt.Sprintf("Start %s", cmd.Short))
+		defer logger.Log("msg", "Shutting down server")
 		errc := make(chan error)
 
 		// Interrupt handler
@@ -92,9 +124,11 @@ to quickly create a Cobra application.`,
 		go func() {
 			lis, err := net.Listen("tcp", port)
 			if err != nil {
-				log.Fatalf("failed to listen: %v", err)
+				logger.Log("failed to listen: %v", err)
 			}
-			s := grpc.NewServer()
+			s := grpc.NewServer(
+				grpc.MaxMsgSize(1024 * 1024 * 50),
+			)
 			pb.RegisterCesarServer(s, &server{})
 			// Register reflection service on gRPC server.
 			reflection.Register(s)
@@ -107,4 +141,12 @@ to quickly create a Cobra application.`,
 
 func init() {
 	RootCmd.AddCommand(serverCmd)
+
+	serverCmd.Flags().StringVarP(
+		&buildRoot,
+		"build-root",
+		"r",
+		"/var/www/html",
+		"What is the default root, for to build the files at on the remote server",
+	)
 }

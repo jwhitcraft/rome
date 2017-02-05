@@ -47,10 +47,15 @@ func CreateFile(path, target string) *File {
 	return &File{Path: path, Target: target}
 }
 
+func CreateRemoteFile(target string, contents []byte) *File {
+	return &File{Target: target, fileContents: contents}
+}
+
 func (f *File) SendToCesar(cesar pb.CesarClient) (*pb.FileResponse, error) {
 	f.readFile()
 	return cesar.BuildFile(context.Background(), &pb.FileRequest{
 		Path:     f.Path,
+		Target:   f.Target,
 		Contents: f.fileContents,
 	})
 }
@@ -72,7 +77,11 @@ func (f *File) GetTarget() string {
 
 func (f *File) readFile() error {
 	var err error
-	f.fileContents, err = ioutil.ReadFile(f.Path)
+
+	// prevent multiple ReadFile calls
+	if f.fileContents == nil {
+		f.fileContents, err = ioutil.ReadFile(f.Path)
+	}
 
 	return err
 }
