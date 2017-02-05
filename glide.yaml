@@ -10,3 +10,11 @@ import:
 - package: github.com/spf13/cobra
   version: master
   repo: https://github.com/dnephin/cobra.git
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  version: ^1.0.5
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto

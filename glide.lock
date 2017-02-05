@@ -1,10 +1,15 @@
-hash: acf85001796970eb832f285ec5d235c350910fa5f3e2934adea535ae14bd429b
-updated: 2017-01-26T11:33:25.069103077-05:00
+hash: d53c558701055105b901a7576560ce9a0136d9c34eb8a4fe199446dab827effe
+updated: 2017-02-04T22:37:43.278693199-05:00
 imports:
 - name: github.com/fatih/color
   version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/golang/protobuf
+  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  subpackages:
+  - proto
+  - protoc-gen-go/descriptor
 - name: github.com/hashicorp/hcl
   version: 39fa3a62ba92cf550eb0f9cfb84757ef79b8aa30
   subpackages:
@@ -55,6 +60,16 @@ imports:
   version: a232f6d9f87afaaa08bafaff5da685f974b83313
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+- name: golang.org/x/net
+  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
 - name: golang.org/x/sys
   version: d75a52659825e75fff6158388dddc6a5b04f9ba5
   subpackages:
@@ -64,6 +79,21 @@ imports:
   subpackages:
   - transform
   - unicode/norm
+- name: google.golang.org/grpc
+  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - reflection
+  - reflection/grpc_reflection_v1alpha
+  - stats
+  - tap
+  - transport
 - name: gopkg.in/inconshreveable/go-update.v0
   version: d8b0b1d421aa1cbf392c05869f8abbc669bb7066
   subpackages:
