@@ -88,7 +88,7 @@ var watchCmd = &cobra.Command{
 				case notify.Rename:
 					fallthrough
 				case notify.Write:
-					fileChanged(build.CreateFile(file.Path()))
+					fileChanged(build.CreateFile(file.Path(), convertToTargetPath(file.Path())))
 				default:
 					log.Printf("%s is not handled yet, moving along", file.Event().String())
 				}
@@ -102,11 +102,10 @@ func fileChanged(file iFile) {
 	if cleanCache {
 		build.CleanCache(destination, cleanCacheItems)
 	}
-	file.SetDestination(source, destination)
 	file.Process(flavor, version)
 	log.Printf("%v %s",
 		color.GreenString("[Built]"),
-		file.GetDestination())
+		file.GetTarget())
 }
 
 func init() {

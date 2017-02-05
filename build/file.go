@@ -1,31 +1,31 @@
 package build
 
-
 import (
-	"fmt"
-	"os"
 	"bufio"
-	"strings"
-	"regexp"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
+	"regexp"
+	"strings"
 
+	pb "github.com/jwhitcraft/rome/cesar"
 	"github.com/jwhitcraft/rome/utils"
-	"path/filepath"
+	"golang.org/x/net/context"
 )
 
 var (
-	ProcessableExtensions = []string{
+	processableExtensions = []string{
 		".php", ".json", ".js", ".html", ".tpl", ".css", ".hbs",
 	}
 	Flavors = map[string][]string{
-		"pro": {"pro"},
+		"pro":  {"pro"},
 		"corp": {"pro", "corp"},
-		"ent": {"pro", "ent"},
-		"ult": {"pro", "ent", "ult"},
+		"ent":  {"pro", "ent"},
+		"ult":  {"pro", "ent", "ult"},
 	}
 
-	License = map[string][]string {
+	License = map[string][]string{
 		"lic": {"sub"},
 	}
 
@@ -33,103 +33,51 @@ var (
 
 	IdRegex = regexp.MustCompile(`\$Id(.*)\$`)
 
-	VarRegex = regexp.MustCompile( "@_SUGAR_(FLAV|VERSION)")
+	VarRegex = regexp.MustCompile("@_SUGAR_(FLAV|VERSION)")
 )
 
 type File struct {
-	SourcePath string
-	DestinationPath string
-	linkTarget string
+	Path         string
+	Target       string
+	fileContents []byte
 }
 
-func (f *File) Process(flavor string, version string) bool {
-	if f.linkTarget == "" {
-		return processFile(f.SourcePath, f.DestinationPath, flavor, version)
-	} else {
-		return f.link()
-	}
+// CreateFile, Create the a File Struct and return it
+func CreateFile(path, target string) *File {
+	return &File{Path: path, Target: target}
 }
 
-func (f *File) link() bool {
-	// this will create the symlink
-	os.Symlink(f.linkTarget, f.DestinationPath)
-	return true
+func (f *File) SendToCesar(cesar pb.CesarClient) (*pb.FileResponse, error) {
+	f.readFile()
+	return cesar.BuildFile(context.Background(), &pb.FileRequest{
+		Path:     f.Path,
+		Contents: f.fileContents,
+	})
 }
 
-func (f *File) SetDestination(source string, destination string) {
-	shortPath := strings.Replace(string(f.SourcePath), source, "", -1)
-	f.DestinationPath = filepath.Join(destination, shortPath)
-	os.MkdirAll(path.Dir(f.DestinationPath), 0775)
+func (f *File) GetSource() string {
+	return f.Path
 }
 
-func (f *File) GetDestination() string {
-	return f.DestinationPath
+func (f *File) Process(flavor string, version string) error {
+	// todo: return errors from processFile
+	f.processFile(flavor, version)
+
+	return nil
 }
 
-func CreateFile(path string) *File {
-	return &File{SourcePath: path}
+func (f *File) GetTarget() string {
+	return f.Target
 }
 
-func CreateSymLink(path, target string) *File {
-	return &File{SourcePath: path, linkTarget: target}
+func (f *File) readFile() error {
+	var err error
+	f.fileContents, err = ioutil.ReadFile(f.Path)
+
+	return err
 }
 
-func processBuildTag(tag string, flavors []string ) bool {
-	// first things first, check for &&
-	tags := strings.Split(tag, "&&")
-	ok := true
-	for _, tag := range tags {
-
-		var tagOk bool
-		if strings.Contains(tag, "||") {
-			// split on the ||
-			var orOk bool
-			orTags := strings.Split(tag, "||")
-			for _, orTag := range orTags {
-				orOk = orOk || getTagBooleanValue(orTag, flavors)
-			}
-			tagOk = orOk
-		} else {
-			tagOk = getTagBooleanValue(tag, flavors)
-		}
-
-		ok = ok && tagOk
-	}
-
-	return ok
-}
-
-func getTagBooleanValue(tag string, flavors []string) bool {
-	tag = strings.TrimSpace(tag)
-	tagSep := getTagSperator(tag)
-	tagKey, tagVal := splitTag(tag, tagSep)
-
-	var testValue []string
-	// default the tag to be allowed, only change it something else is off
-	switch tagKey {
-	case "flav":
-		testValue = flavors
-	case "lic":
-		testValue = License[tagKey]
-	case "dep":
-		testValue = []string{"os"}
-	}
-	if tagSep == "!=" {
-		return notContains(testValue, tagVal)
-	}
-
-	return contains(testValue, tagVal)
-}
-
-func getTagSperator(tag string) string {
-	if strings.Contains(tag, "!=") {
-		return "!="
-	}
-
-	return "="
-}
-
-func processFile(srcPath string, destPath string, buildFlavor string, buildVersion string) bool {
+func (f *File) processFile(buildFlavor string, buildVersion string) bool {
 	var useLine bool = true
 	var shouldProcess bool = false
 	var canProcess bool = false
@@ -137,28 +85,33 @@ func processFile(srcPath string, destPath string, buildFlavor string, buildVersi
 	var skippedLines utils.Counter
 
 	// lets make sure the that folder exists
-	var destFolder string = path.Dir(destPath)
-	var fileExt string = path.Ext(destPath)
+	var destFolder string = path.Dir(f.Target)
+	var fileExt string = path.Ext(f.Target)
 	// var fileName string = path.Base(destPath)
 	os.MkdirAll(destFolder, 0775)
 
 	// regardless, if the file is in the node_modules folder
 	// don't try and process it
 	if !strings.Contains(destFolder, "node_modules") {
-		canProcess = contains(ProcessableExtensions, fileExt)
+		canProcess = contains(processableExtensions, fileExt)
 	}
 
 	// first load the whole file to check for the build tags
-	fileBytes, err := ioutil.ReadFile(srcPath)
-	fileString := string(fileBytes)
+	err := f.readFile()
+	if err != nil {
+		// todo return the error instead of false
+		//return err;
+		return false
+	}
+	fileString := string(f.fileContents)
 	if canProcess && TagRegex.MatchString(fileString) {
 		shouldProcess = true
 		// check to see if it's a type of FILE
 		matches := TagRegex.FindStringSubmatch(fileString)
 		if matches[1] == "FILE" {
 			tagOk := processBuildTag(matches[2], Flavors[buildFlavor])
-			//fmt.Printf("// File Tag Found for flavor: %s and building %s, should build file: %t\n", tagFlav, buildFlavor, tagOk)
 			if tagOk == false {
+				// todo return nil here as no file should be built
 				return false
 			}
 		}
@@ -169,20 +122,13 @@ func processFile(srcPath string, destPath string, buildFlavor string, buildVersi
 		fileString = strings.Replace(fileString, "@_SUGAR_VERSION", buildVersion, -1)
 		fileString = strings.Replace(fileString, "@_SUGAR_FLAV", buildFlavor, -1)
 	}
-
-
-	if err != nil {
-		fmt.Printf("pre-preocess error: %v\n",err)
-		return false
-	}
-
-	fw, err := os.Create(destPath)
+	fw, err := os.Create(f.Target)
 	defer fw.Close()
 
 	if shouldProcess {
 		f := strings.NewReader(fileString)
 		if err != nil {
-			fmt.Printf("error opening file: %v\n",err)
+			fmt.Printf("error opening file: %v\n", err)
 			os.Exit(1)
 		}
 		writer := bufio.NewWriter(fw)
@@ -223,33 +169,4 @@ func processFile(srcPath string, destPath string, buildFlavor string, buildVersi
 	}
 
 	return true
-}
-
-func splitTag(eval, splitOn string) (key, val string) {
-	splitVal := strings.Split(eval, splitOn)
-
-	// if the value only has item in it after split, assume it's the value not the key
-	if len(splitVal) == 1 {
-		key = "flav"
-		val = splitVal[0]
-	} else {
-		key = splitVal[0]
-		val = splitVal[1]
-	}
-
-	return strings.TrimSpace(strings.ToLower(key)), strings.TrimSpace(strings.ToLower(val))
-}
-
-func notContains(slice []string, item string) bool {
-	return !contains(slice, item)
-}
-
-func contains(slice []string, item string) bool {
-	set := make(map[string]struct{}, len(slice))
-	for _, s := range slice {
-		set[s] = struct{}{}
-	}
-
-	_, ok := set[item]
-	return ok
 }
