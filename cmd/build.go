@@ -21,10 +21,7 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-
-	"google.golang.org/grpc"
 
 	"os"
 	"path/filepath"
@@ -35,6 +32,8 @@ import (
 	"github.com/jwhitcraft/rome/build"
 	"github.com/jwhitcraft/rome/utils"
 	"github.com/spf13/cobra"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 
 	"github.com/fatih/color"
 	pb "github.com/jwhitcraft/rome/cesar"
