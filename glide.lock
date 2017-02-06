@@ -1,10 +1,18 @@
-hash: d53c558701055105b901a7576560ce9a0136d9c34eb8a4fe199446dab827effe
-updated: 2017-02-04T22:37:43.278693199-05:00
+hash: 212ac8d198cd571559c48a9e86bde5d808dc93e42eee0688a118131feb48c117
+updated: 2017-02-06T07:54:46.367463748-05:00
 imports:
 - name: github.com/fatih/color
   version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/go-kit/kit
+  version: f66b0e13579bfc5a48b9e2a94b1209c107ea1f41
+  subpackages:
+  - log
+- name: github.com/go-logfmt/logfmt
+  version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
+- name: github.com/go-stack/stack
+  version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
 - name: github.com/golang/protobuf
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
@@ -27,6 +35,8 @@ imports:
   version: 6e7f843663477789fac7c02def0d0909e969b4e5
 - name: github.com/kr/binarydist
   version: 9955b0ab8708602d411341e55fffd7e0700f86bd
+- name: github.com/kr/logfmt
+  version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
@@ -61,7 +71,7 @@ imports:
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
 - name: golang.org/x/net
-  version: 41bba8d80bbfab43231ffdf4c210037baae5f6a3
+  version: 236b8f043b920452504e263bc21d354427127473
   subpackages:
   - context
   - http2
