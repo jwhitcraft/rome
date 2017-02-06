@@ -48,6 +48,7 @@ var (
 	attributes *pb.BuildAttrResponse
 	buildRoot  string
 	logger     log.Logger
+	logfile    string
 )
 
 type server struct{}
@@ -67,7 +68,7 @@ func (s *server) BuildFile(ctx context.Context, in *pb.FileRequest) (*pb.FileRes
 
 func (s *server) CreateSymLink(ctx context.Context, in *pb.CreateSymLinkRequest) (*pb.FileResponse, error) {
 	target := filepath.Join(buildRoot, attributes.Folder, in.Target)
-	logger.Log("msg", "Building Symlink"+target)
+	logger.Log("msg", fmt.Sprintf("Symlinking %s to %s", in.OriginFile, target))
 	file := build.CreateSymLink(target, in.OriginFile)
 	err := file.Process(attributes.Flavor, attributes.Version)
 	if err != nil {
@@ -107,7 +108,15 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		logger = log.NewLogfmtLogger(os.Stdout)
+		var err error
+		logOutput := os.Stdout
+		if logfile != "" {
+			logOutput, err = os.Create(logfile)
+			if err == nil {
+				defer logOutput.Close()
+			}
+		}
+		logger = log.NewLogfmtLogger(logOutput)
 		logger = log.NewContext(logger).With("ts", log.DefaultTimestampUTC)
 		logger.Log("msg", fmt.Sprintf("Start %s", cmd.Short))
 		defer logger.Log("msg", "Shutting down server")
@@ -148,5 +157,12 @@ func init() {
 		"r",
 		"/var/www/html",
 		"What is the default root, for to build the files at on the remote server",
+	)
+
+	serverCmd.Flags().StringVar(
+		&logfile,
+		"logfile",
+		"",
+		"Send the output to a log file, if nothing is passed, it will default to standard out",
 	)
 }
