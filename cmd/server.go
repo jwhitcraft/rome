@@ -21,19 +21,16 @@
 package cmd
 
 import (
-	"net"
-
-	"github.com/go-kit/kit/log"
-
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
-	"path/filepath"
-
+	"github.com/go-kit/kit/log"
+	pb "github.com/jwhitcraft/rome/aqueduct"
 	"github.com/jwhitcraft/rome/build"
-	pb "github.com/jwhitcraft/rome/cesar"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -101,12 +98,8 @@ func (s *server) GetBuildAttributes(ctx context.Context, in *pb.GetBuildAttrRequ
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Run Rome as a service on a remote machine",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: `Running Rome as a service, allows building of files on a remote host, when the files are on a different
+machine.   This allows code to live locally, but be built in a VM or a Container where this service is running.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
 		logOutput := os.Stdout
@@ -138,7 +131,7 @@ to quickly create a Cobra application.`,
 			s := grpc.NewServer(
 				grpc.MaxMsgSize(1024 * 1024 * 50),
 			)
-			pb.RegisterCesarServer(s, &server{})
+			pb.RegisterAqueductServer(s, &server{})
 			// Register reflection service on gRPC server.
 			reflection.Register(s)
 			errc <- s.Serve(lis)

@@ -29,8 +29,9 @@ clean:
 test:
 	go test -v `glide novendor`
 
-cesar:
-	protoc -I cesar/ cesar/cesar.proto --go_out=plugins=grpc:cesar
+.PHONY: aqueduct
+aqueduct:
+	protoc -I aqueduct/ aqueduct/aqueduct.proto --go_out=plugins=grpc:aqueduct
 
 ##### LINUX BUILDS #####
 linux: packages/linux_amd64.tar.gz

@@ -4,7 +4,7 @@ import (
 	"os"
 	"path"
 
-	pb "github.com/jwhitcraft/rome/cesar"
+	pb "github.com/jwhitcraft/rome/aqueduct"
 	"golang.org/x/net/context"
 )
 
@@ -28,7 +28,7 @@ func (s *SymLink) GetTarget() string {
 	return s.Target
 }
 
-func (s *SymLink) SendToCesar(cesar pb.CesarClient) (*pb.FileResponse, error) {
+func (s *SymLink) SendToAqueduct(cesar pb.AqueductClient) (*pb.FileResponse, error) {
 	return cesar.CreateSymLink(context.Background(), &pb.CreateSymLinkRequest{
 		Target:     s.Target,
 		OriginFile: s.OriginFile,

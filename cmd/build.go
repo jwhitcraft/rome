@@ -36,7 +36,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/fatih/color"
-	pb "github.com/jwhitcraft/rome/cesar"
+	pb "github.com/jwhitcraft/rome/aqueduct"
 )
 
 var (
@@ -60,13 +60,13 @@ var (
 	remote_server_port   string
 	remote_server_folder string
 
-	cesar pb.CesarClient
+	cesar pb.AqueductClient
 )
 
 type iFile interface {
 	Process(flavor string, version string) error
 	GetTarget() string
-	SendToCesar(cesar pb.CesarClient) (*pb.FileResponse, error)
+	SendToAqueduct(cesar pb.AqueductClient) (*pb.FileResponse, error)
 }
 
 func validSourceArg(cmd *cobra.Command, args []string) error {
@@ -222,12 +222,12 @@ func init() {
 
 }
 
-func createClient() (pb.CesarClient, error) {
+func createClient() (pb.AqueductClient, error) {
 	conn, err := grpc.Dial(remote_server+":"+remote_server_port, grpc.WithInsecure(), grpc.WithTimeout(10*time.Second))
 	if err != nil {
 		return nil, fmt.Errorf("Could not connect to remote server: %v", err)
 	}
-	client := pb.NewCesarClient(conn)
+	client := pb.NewAqueductClient(conn)
 
 	if remote_server_folder == "" {
 		remote_server_folder = fmt.Sprintf("%s%s", version, flavor)
@@ -264,7 +264,7 @@ func fileWorker(files <-chan iFile, wg *sync.WaitGroup) {
 				return
 			}
 			if cesar != nil {
-				f, err := file.SendToCesar(cesar)
+				f, err := file.SendToAqueduct(cesar)
 				if err != nil {
 					fmt.Printf("Error Building File: %s because %v\n", file.GetTarget(), err)
 				}

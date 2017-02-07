@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	pb "github.com/jwhitcraft/rome/cesar"
+	pb "github.com/jwhitcraft/rome/aqueduct"
 	"github.com/jwhitcraft/rome/utils"
 	"golang.org/x/net/context"
 )
@@ -51,9 +51,9 @@ func CreateRemoteFile(target string, contents []byte) *File {
 	return &File{Target: target, fileContents: contents}
 }
 
-func (f *File) SendToCesar(cesar pb.CesarClient) (*pb.FileResponse, error) {
+func (f *File) SendToAqueduct(aqueduct pb.AqueductClient) (*pb.FileResponse, error) {
 	f.readFile()
-	return cesar.BuildFile(context.Background(), &pb.FileRequest{
+	return aqueduct.BuildFile(context.Background(), &pb.FileRequest{
 		Path:     f.Path,
 		Target:   f.Target,
 		Contents: f.fileContents,

@@ -1,10 +1,10 @@
 
 syntax = "proto3";
 
-package cesar;
+package aqueduct;
 
 // The cesar service definition
-service Cesar {
+service Aqueduct {
     rpc BuildFile (FileRequest) returns (FileResponse) {}
     rpc CreateSymLink (CreateSymLinkRequest) returns (FileResponse) {}
     rpc SetBuildAttributes(SetBuildAttrRequest) returns (BuildAttrResponse) {}
