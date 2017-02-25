@@ -35,6 +35,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
+	"errors"
+
 	"github.com/fatih/color"
 	pb "github.com/jwhitcraft/rome/aqueduct"
 )
@@ -60,7 +62,7 @@ var (
 	remote_server_port   string
 	remote_server_folder string
 
-	cesar pb.AqueductClient
+	conduit pb.AqueductClient
 )
 
 type iFile interface {
@@ -95,9 +97,13 @@ installable copy of Sugar for you to use and dev on.
 By default this will ignore sugarcrm/node_modules, but build sugarcrm/sidecar/node_modules to save on time since the
 node_modules are not required inside of SugarCRM but are for Sidecar.
 `,
-	PreRun: func(cmd *cobra.Command, args []string) {
+	PreRunE: func(cmd *cobra.Command, args []string) error {
 		// in the preRun, make sure that the source and destination exists
 		source = args[0]
+
+		if remote_server == "" && destination == "" {
+			return errors.New("Destination or Remove Server Not Defined\n")
+		}
 
 		if destination != "" {
 			destExists, err := exists(destination)
@@ -111,9 +117,10 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 
 		sourceExists, err := exists(source)
 		if err != nil || !sourceExists {
-			fmt.Printf("\n\nSource Path (%s) does not exists!!\n\n", source)
-			os.Exit(401)
+			return errors.New(fmt.Sprintf("\n\nSource Path (%s) does not exists!!\n\n", source))
 		}
+
+		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		if destination != "" {
@@ -146,12 +153,14 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 			go fileWorker(files, &wg)
 		}
 
-		// connect to the server
-		var err error
-		cesar, err = createClient()
-		if err != nil {
-			fmt.Fprint(os.Stderr, err.Error())
-			os.Exit(500)
+		if remote_server != "" {
+			// connect to the server
+			var err error
+			conduit, err = createClient()
+			if err != nil {
+				fmt.Fprint(os.Stderr, err.Error())
+				os.Exit(500)
+			}
 		}
 
 		filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
@@ -194,7 +203,7 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 
 func convertToTargetPath(path string) string {
 	newPath := strings.Replace(path, source, "", -1)
-	if cesar != nil {
+	if conduit != nil {
 		newPath = filepath.Join(destination, newPath)
 	}
 
@@ -263,8 +272,8 @@ func fileWorker(files <-chan iFile, wg *sync.WaitGroup) {
 			if !ok {
 				return
 			}
-			if cesar != nil {
-				f, err := file.SendToAqueduct(cesar)
+			if conduit != nil {
+				f, err := file.SendToAqueduct(conduit)
 				if err != nil {
 					fmt.Printf("Error Building File: %s because %v\n", file.GetTarget(), err)
 				}
