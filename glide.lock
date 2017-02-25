@@ -1,8 +1,12 @@
-hash: 212ac8d198cd571559c48a9e86bde5d808dc93e42eee0688a118131feb48c117
-updated: 2017-02-06T07:54:46.367463748-05:00
+hash: db2b5f45ab7dfe080674ea1a03a0c673a8ddf67194589e302eee8ef072ec7ae1
+updated: 2017-02-25T00:14:12.691812427-05:00
 imports:
+- name: github.com/cpuguy83/go-md2man
+  version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
+  subpackages:
+  - md2man
 - name: github.com/fatih/color
-  version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
+  version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/go-kit/kit
@@ -14,7 +18,7 @@ imports:
 - name: github.com/go-stack/stack
   version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
 - name: github.com/golang/protobuf
-  version: 8ee79997227bf9b34611aee7946ae64735e6fd93
+  version: 69b215d01a5606c843240eab4937eab3acee6530
   subpackages:
   - proto
   - protoc-gen-go/descriptor
@@ -40,9 +44,11 @@ imports:
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
-  version: d228849504861217f796da67fae4f6e347643f15
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mitchellh/mapstructure
   version: ed105d635dfa9ea7133f7c79f1eb36203fc3a156
 - name: github.com/pelletier/go-buffruneio
@@ -50,11 +56,15 @@ imports:
 - name: github.com/pelletier/go-toml
   version: a1f048ba24490f9b0674a67e1ce995d685cddf4a
 - name: github.com/rjeczalik/notify
-  version: b8dab33f409f63a90858d0eff0da94ed1a692b66
+  version: 9d5aa0c3b735c3340018a4627446c3ea5a04a097
+- name: github.com/russross/blackfriday
+  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/sanbornm/go-selfupdate
   version: bf295275fb1ee4e347c09330ed9a3c76cc19895a
   subpackages:
   - selfupdate
+- name: github.com/shurcooL/sanitized_anchor_name
+  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/spf13/afero
   version: 72b31426848c6ef12a7a8e216708cb0d1530f074
   subpackages:
@@ -64,6 +74,8 @@ imports:
 - name: github.com/spf13/cobra
   version: 5d13e8c9d917d962ffc593fb2529d281ae04a7fd
   repo: https://github.com/dnephin/cobra.git
+  subpackages:
+  - doc
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
@@ -71,7 +83,7 @@ imports:
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
 - name: golang.org/x/net
-  version: 236b8f043b920452504e263bc21d354427127473
+  version: 10c134ea0df15f7e34d789338c7a2d76cc7a3ab9
   subpackages:
   - context
   - http2
@@ -81,7 +93,8 @@ imports:
   - lex/httplex
   - trace
 - name: golang.org/x/sys
-  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  repo: https://go.googlesource.com/sys
   subpackages:
   - unix
 - name: golang.org/x/text

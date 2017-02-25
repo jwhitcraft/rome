@@ -33,11 +33,8 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "rome",
-	Short: "A Tool for Builing Sugar from source",
-	Long:  `Rome wasn't built in a day, but sugar can be when using this tool.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Short: "A Tool for Building Sugar from source",
+	Long:  `Rome wasn't built in a day, but sugar can be!`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
