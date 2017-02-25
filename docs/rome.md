@@ -1,11 +1,11 @@
 ## rome
 
-A Tool for Builing Sugar from source
+A Tool for Building Sugar from source
 
 ### Synopsis
 
 
-Rome wasn't built in a day, but sugar can be when using this tool.
+Rome wasn't built in a day, but sugar can be!
 
 ### SEE ALSO
 * [rome build](rome_build.md)	 - Build SugarCRM

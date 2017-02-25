@@ -25,21 +25,22 @@ import (
 	"log"
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/rjeczalik/notify"
-	"github.com/jwhitcraft/rome/build"
-	"github.com/fatih/color"
 	"strings"
+
+	"github.com/fatih/color"
+	"github.com/jwhitcraft/rome/build"
+	"github.com/rjeczalik/notify"
+	"github.com/spf13/cobra"
 )
 
 // watchCmd represents the watch command
 var watchCmd = &cobra.Command{
-	Use:   "watch",
+	Use:     "watch",
 	Example: "rome watch -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
-	Args: validSourceArg,
-	Short: "Watch the file system for changes and built any files that change",
-	Long: `Watch for file changes, and then build them as they happen.`,
-	PreRun: func(cmd *cobra.Command, args[]string) {
+	Args:    validSourceArg,
+	Short:   "Watch the file system for changes and built any files that change",
+	Long:    `Watch for file changes, and then build them as they happen.`,
+	PreRun: func(cmd *cobra.Command, args []string) {
 		// in the preRun, make sure that the source and destination exists
 		source = args[0]
 
@@ -65,7 +66,7 @@ var watchCmd = &cobra.Command{
 
 		// Set up a watchpoint listening for events within a directory tree rooted
 		// at current working directory. Dispatch remove events to c.
-		if err := notify.Watch(source + "/...", c, notify.Create, notify.Write, notify.Rename); err != nil {
+		if err := notify.Watch(source+"/...", c, notify.Create, notify.Write, notify.Rename); err != nil {
 			log.Fatal(err)
 		}
 		defer notify.Stop(c)
@@ -111,9 +112,8 @@ func fileChanged(file iFile) {
 func init() {
 	RootCmd.AddCommand(watchCmd)
 
-	watchCmd.Flags().StringVarP(&destination,"destination", "d", "", "Where should the built files be put")
-	watchCmd.Flags().StringVarP(&version, "version", "v", "","Specifies the version number to include in the build. All references in the application to a \"version number\" will indicate whatever version is specified.")
-	watchCmd.Flags().StringVarP(&flavor, "flavor", "f", "ent","What Flavor of SugarCRM to build")
+	addBuildCommands(watchCmd)
+
 	watchCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
 	watchCmd.MarkFlagRequired("version")

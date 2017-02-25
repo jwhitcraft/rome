@@ -213,15 +213,10 @@ func convertToTargetPath(path string) string {
 func init() {
 	RootCmd.AddCommand(buildCmd)
 
-	buildCmd.Flags().StringVarP(&destination, "destination", "d", "", "Where should the built files be put")
-	buildCmd.Flags().StringVarP(&version, "version", "v", "", "What Version is being built")
-	buildCmd.Flags().StringVarP(&flavor, "flavor", "f", "ent", "What Flavor of SugarCRM to build")
+	addBuildCommands(buildCmd)
+
 	buildCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
 	buildCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
-
-	buildCmd.Flags().StringVarP(&remote_server, "server", "s", "", "What server should we build to")
-	buildCmd.Flags().StringVar(&remote_server_port, "port", "47600", "What is the server port")
-	buildCmd.Flags().StringVarP(&remote_server_folder, "folder", "l", "", "What folder should we build to on the server, if left empty, it will build to a folder named <version><flavor>")
 
 	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 80, "Number of Workers to start for processing files")
 	buildCmd.Flags().IntVar(&fileBufferSize, "file-buffer-size", 4096, "Size of the file buffer before it gets reset")
@@ -229,6 +224,16 @@ func init() {
 	buildCmd.MarkFlagRequired("version")
 	buildCmd.MarkFlagRequired("flavor")
 
+}
+
+func addBuildCommands(cmd *cobra.Command) {
+	cmd.Flags().StringVarP(&destination, "destination", "d", "", "Where should the built files be put")
+	cmd.Flags().StringVarP(&version, "version", "v", "", "What Version is being built")
+	cmd.Flags().StringVarP(&flavor, "flavor", "f", "ent", "What Flavor of SugarCRM to build")
+
+	cmd.Flags().StringVarP(&remote_server, "server", "s", "", "What server should we build to")
+	cmd.Flags().StringVar(&remote_server_port, "port", "47600", "What is the server port")
+	cmd.Flags().StringVarP(&remote_server_folder, "folder", "l", "", "What folder should we build to on the server, if left empty, it will build to a folder named <version><flavor>")
 }
 
 func createClient() (pb.AqueductClient, error) {
