@@ -47,8 +47,7 @@ var (
 	destination string
 	source      string
 
-	clean bool = false
-
+	clean      bool = false
 	cleanCache bool = false
 
 	fileWorkers    int = 80
@@ -68,7 +67,7 @@ var (
 type iFile interface {
 	Process(flavor string, version string) error
 	GetTarget() string
-	SendToAqueduct(cesar pb.AqueductClient) (*pb.FileResponse, error)
+	SendToAqueduct(conduit pb.AqueductClient) (*pb.FileResponse, error)
 }
 
 func validSourceArg(cmd *cobra.Command, args []string) error {
@@ -97,31 +96,7 @@ installable copy of Sugar for you to use and dev on.
 By default this will ignore sugarcrm/node_modules, but build sugarcrm/sidecar/node_modules to save on time since the
 node_modules are not required inside of SugarCRM but are for Sidecar.
 `,
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		// in the preRun, make sure that the source and destination exists
-		source = args[0]
-
-		if remote_server == "" && destination == "" {
-			return errors.New("Destination or Remove Server Not Defined\n")
-		}
-
-		if destination != "" {
-			destExists, err := exists(destination)
-			if err != nil || !destExists {
-				fmt.Printf("Destination Path (%s) does not exists, Creating Now\n", destination)
-				os.MkdirAll(destination, 0775)
-				// since we had to create the destination dir, set clean to false
-				clean = false
-			}
-		}
-
-		sourceExists, err := exists(source)
-		if err != nil || !sourceExists {
-			return errors.New(fmt.Sprintf("\n\nSource Path (%s) does not exists!!\n\n", source))
-		}
-
-		return nil
-	},
+	PreRunE: buildPreRun,
 	Run: func(cmd *cobra.Command, args []string) {
 		if destination != "" {
 			if clean {
@@ -151,16 +126,6 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 		for i := 0; i < fileWorkers; i++ {
 			wg.Add(1)
 			go fileWorker(files, &wg)
-		}
-
-		if remote_server != "" {
-			// connect to the server
-			var err error
-			conduit, err = createClient()
-			if err != nil {
-				fmt.Fprint(os.Stderr, err.Error())
-				os.Exit(500)
-			}
 		}
 
 		filepath.Walk(source, func(path string, f os.FileInfo, err error) error {
@@ -201,6 +166,39 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 	},
 }
 
+func buildPreRun(cmd *cobra.Command, args []string) error {
+	// in the preRun, make sure that the source and destination exists
+	source = args[0]
+
+	if remote_server == "" && destination == "" {
+		return errors.New("Destination or Remote Server Not Defined\n")
+	}
+
+	if destination != "" {
+		destExists, err := exists(destination)
+		if err != nil || !destExists {
+			fmt.Printf("Destination Path (%s) does not exists, Creating Now\n", destination)
+			os.MkdirAll(destination, 0775)
+			// since we had to create the destination dir, set clean to false
+			clean = false
+		}
+	} else if remote_server != "" {
+		// connect to the server
+		var err error
+		conduit, err = createClient()
+		if err != nil {
+			return err
+		}
+	}
+
+	sourceExists, err := exists(source)
+	if err != nil || !sourceExists {
+		return errors.New(fmt.Sprintf("\n\nSource Path (%s) does not exists!!\n\n", source))
+	}
+
+	return nil
+}
+
 func convertToTargetPath(path string) string {
 	newPath := strings.Replace(path, source, "", -1)
 	if conduit != nil {
@@ -216,7 +214,6 @@ func init() {
 	addBuildCommands(buildCmd)
 
 	buildCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
-	buildCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
 	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 80, "Number of Workers to start for processing files")
 	buildCmd.Flags().IntVar(&fileBufferSize, "file-buffer-size", 4096, "Size of the file buffer before it gets reset")
@@ -230,6 +227,7 @@ func addBuildCommands(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&destination, "destination", "d", "", "Where should the built files be put")
 	cmd.Flags().StringVarP(&version, "version", "v", "", "What Version is being built")
 	cmd.Flags().StringVarP(&flavor, "flavor", "f", "ent", "What Flavor of SugarCRM to build")
+	cmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
 	cmd.Flags().StringVarP(&remote_server, "server", "s", "", "What server should we build to")
 	cmd.Flags().StringVar(&remote_server_port, "port", "47600", "What is the server port")

@@ -23,11 +23,13 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"strings"
 
+	"context"
+
 	"github.com/fatih/color"
+	pb "github.com/jwhitcraft/rome/aqueduct"
 	"github.com/jwhitcraft/rome/build"
 	"github.com/rjeczalik/notify"
 	"github.com/spf13/cobra"
@@ -40,25 +42,7 @@ var watchCmd = &cobra.Command{
 	Args:    validSourceArg,
 	Short:   "Watch the file system for changes and built any files that change",
 	Long:    `Watch for file changes, and then build them as they happen.`,
-	PreRun: func(cmd *cobra.Command, args []string) {
-		// in the preRun, make sure that the source and destination exists
-		source = args[0]
-
-		destExists, err := exists(destination)
-		if err != nil || !destExists {
-			fmt.Printf("Destination Path (%s) does not exists, Creating Now\n", destination)
-			os.MkdirAll(destination, 0775)
-			// since we had to create the destination dir, set clean to false
-			clean = false
-		}
-
-		sourceExists, err := exists(source)
-		if err != nil || !sourceExists {
-			fmt.Printf("\n\nSource Path (%s) does not exists!!\n\n", source)
-			os.Exit(401)
-		}
-	},
-
+	PreRunE: buildPreRun,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Make the channel buffered to ensure no event is dropped. Notify will drop
 		// an event if the receiver is not able to keep up the sending pace.
@@ -78,6 +62,7 @@ var watchCmd = &cobra.Command{
 
 		// keep the looping open
 		for {
+			// todo figure out symlinks in here
 			file := <-c
 			// silly jetbrains and how it saves files
 			if !strings.Contains(file.Path(), "___jb_") &&
@@ -100,10 +85,19 @@ var watchCmd = &cobra.Command{
 }
 
 func fileChanged(file iFile) {
+	// this is a bit complex, but it works, should look at cleaning it up
 	if cleanCache {
-		build.CleanCache(destination, cleanCacheItems)
+		if conduit != nil {
+			conduit.CleanCache(context.Background(), &pb.CleanCacheRequest{})
+		} else {
+			build.CleanCache(destination, cleanCacheItems)
+		}
 	}
-	file.Process(flavor, version)
+	if conduit != nil {
+		file.SendToAqueduct(conduit)
+	} else {
+		file.Process(flavor, version)
+	}
 	log.Printf("%v %s",
 		color.GreenString("[Built]"),
 		file.GetTarget())
@@ -113,8 +107,6 @@ func init() {
 	RootCmd.AddCommand(watchCmd)
 
 	addBuildCommands(watchCmd)
-
-	watchCmd.Flags().BoolVar(&cleanCache, "clean-cache", false, "Clears the cache before doing the build. This will only delete certain cache files before doing a build.")
 
 	watchCmd.MarkFlagRequired("version")
 	watchCmd.MarkFlagRequired("flavor")

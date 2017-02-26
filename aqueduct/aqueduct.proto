@@ -9,6 +9,7 @@ service Aqueduct {
     rpc CreateSymLink (CreateSymLinkRequest) returns (FileResponse) {}
     rpc SetBuildAttributes(SetBuildAttrRequest) returns (BuildAttrResponse) {}
     rpc GetBuildAttributes(GetBuildAttrRequest) returns (BuildAttrResponse) {}
+    rpc CleanCache(CleanCacheRequest) returns (CleanCacheResponse) {}
 }
 
 // The Request message containing information about the file
@@ -45,3 +46,5 @@ message BuildAttrResponse {
     bool clean = 4;
 }
 
+message CleanCacheRequest {}
+message CleanCacheResponse {}

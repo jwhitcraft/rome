@@ -42,16 +42,17 @@ const (
 )
 
 var (
-	attributes *pb.BuildAttrResponse
-	buildRoot  string
-	logger     log.Logger
-	logfile    string
+	attributes  *pb.BuildAttrResponse
+	buildRoot   string
+	buildFolder string
+	logger      log.Logger
+	logfile     string
 )
 
 type server struct{}
 
 func (s *server) BuildFile(ctx context.Context, in *pb.FileRequest) (*pb.FileResponse, error) {
-	target := filepath.Join(buildRoot, attributes.Folder, in.Target)
+	target := filepath.Join(buildFolder, in.Target)
 	logger.Log("msg", "Building File"+target)
 	file := build.CreateRemoteFile(target, in.Contents)
 	err := file.Process(attributes.Flavor, attributes.Version)
@@ -60,7 +61,6 @@ func (s *server) BuildFile(ctx context.Context, in *pb.FileRequest) (*pb.FileRes
 	}
 
 	return &pb.FileResponse{File: target}, nil
-
 }
 
 func (s *server) CreateSymLink(ctx context.Context, in *pb.CreateSymLinkRequest) (*pb.FileResponse, error) {
@@ -77,13 +77,23 @@ func (s *server) CreateSymLink(ctx context.Context, in *pb.CreateSymLinkRequest)
 func (s *server) SetBuildAttributes(ctx context.Context, in *pb.SetBuildAttrRequest) (*pb.BuildAttrResponse, error) {
 	attributes = &pb.BuildAttrResponse{Version: in.Version, Clean: in.Clean, Flavor: in.Flavor, Folder: in.Folder}
 
+	buildFolder = filepath.Join(buildRoot, attributes.Folder)
 	if attributes.Clean {
-		target := filepath.Join(buildRoot, attributes.Folder)
-		logger.Log("msg", fmt.Sprintf("Cleaning %s", target))
-		build.CleanBuild(build.TargetDirectory{Path: target})
+		logger.Log("msg", fmt.Sprintf("Cleaning %s", buildFolder))
+		build.CleanBuild(build.TargetDirectory{Path: buildFolder})
 	}
 
 	return attributes, nil
+}
+
+func (s *server) CleanCache(ctx context.Context, in *pb.CleanCacheRequest) (*pb.CleanCacheResponse, error) {
+
+	err := build.CleanCache(buildFolder, cleanCacheItems)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CleanCacheResponse{}, nil
 }
 
 func (s *server) GetBuildAttributes(ctx context.Context, in *pb.GetBuildAttrRequest) (*pb.BuildAttrResponse, error) {
