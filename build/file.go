@@ -40,6 +40,7 @@ type File struct {
 	Path         string
 	Target       string
 	fileContents []byte
+	removed      bool
 }
 
 // CreateFile, Create the a File Struct and return it
@@ -47,17 +48,31 @@ func CreateFile(path, target string) *File {
 	return &File{Path: path, Target: target}
 }
 
+func RemoveFile(path, target string) *File {
+	f := CreateFile(path, target)
+	f.removed = true
+
+	return f
+}
+
 func CreateRemoteFile(target string, contents []byte) *File {
 	return &File{Target: target, fileContents: contents}
 }
 
 func (f *File) SendToAqueduct(aqueduct pb.AqueductClient) (*pb.FileResponse, error) {
+
 	f.readFile()
-	return aqueduct.BuildFile(context.Background(), &pb.FileRequest{
+	fr := &pb.FileRequest{
 		Path:     f.Path,
 		Target:   f.Target,
 		Contents: f.fileContents,
-	})
+	}
+
+	if f.removed == true {
+		return aqueduct.DeleteFile(context.Background(), fr)
+	} else {
+		return aqueduct.BuildFile(context.Background(), fr)
+	}
 }
 
 func (f *File) GetSource() string {
@@ -68,6 +83,14 @@ func (f *File) Process(flavor string, version string) error {
 	// todo: return errors from processFile
 	f.processFile(flavor, version)
 
+	return nil
+}
+
+func (f *File) Delete() error {
+	err := os.Remove(f.Target)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

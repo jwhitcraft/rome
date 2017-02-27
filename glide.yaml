@@ -26,3 +26,5 @@ import:
   version: ^1.0.6
   subpackages:
   - md2man
+- package: github.com/cortesi/moddwatch
+- package: github.com/cortesi/termlog

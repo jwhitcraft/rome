@@ -1,6 +1,15 @@
-hash: db2b5f45ab7dfe080674ea1a03a0c673a8ddf67194589e302eee8ef072ec7ae1
-updated: 2017-02-25T00:14:12.691812427-05:00
+hash: 47ad396faebe1e39441acafb9a9035070b97bf28f8bb3d444cf60dfe82854f79
+updated: 2017-02-26T22:36:32.074484197-05:00
 imports:
+- name: github.com/bmatcuk/doublestar
+  version: dd6a6f0a8cdfaaa88b08cf26cf1bc7d69003ee13
+  repo: https://github.com/bmatcuk/doublestar
+- name: github.com/cortesi/moddwatch
+  version: a149019f9ed6f16033de28f66d8c1247593a0104
+  subpackages:
+  - filter
+- name: github.com/cortesi/termlog
+  version: 2ed14eb6ce62ec5bcc3fd25885a1d13d53f34fd1
 - name: github.com/cpuguy83/go-md2man
   version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
   subpackages:
@@ -56,7 +65,7 @@ imports:
 - name: github.com/pelletier/go-toml
   version: a1f048ba24490f9b0674a67e1ce995d685cddf4a
 - name: github.com/rjeczalik/notify
-  version: 9d5aa0c3b735c3340018a4627446c3ea5a04a097
+  version: 7e20c15e6693a7d6ad269a94b70ed68bc4a875a7
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/sanbornm/go-selfupdate
@@ -82,6 +91,11 @@ imports:
   version: a232f6d9f87afaaa08bafaff5da685f974b83313
 - name: github.com/spf13/viper
   version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+- name: golang.org/x/crypto
+  version: 8e06e8ddd9629eb88639aba897641bff8031f1d3
+  repo: https://go.googlesource.com/crypto
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
   version: 10c134ea0df15f7e34d789338c7a2d76cc7a3ab9
   subpackages:

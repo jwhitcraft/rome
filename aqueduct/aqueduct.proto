@@ -6,6 +6,7 @@ package aqueduct;
 // The cesar service definition
 service Aqueduct {
     rpc BuildFile (FileRequest) returns (FileResponse) {}
+    rpc DeleteFile (FileRequest) returns (FileResponse) {}
     rpc CreateSymLink (CreateSymLinkRequest) returns (FileResponse) {}
     rpc SetBuildAttributes(SetBuildAttrRequest) returns (BuildAttrResponse) {}
     rpc GetBuildAttributes(GetBuildAttrRequest) returns (BuildAttrResponse) {}

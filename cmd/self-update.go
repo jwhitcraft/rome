@@ -23,16 +23,17 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
-	"github.com/sanbornm/go-selfupdate/selfupdate"
 	"os"
+
+	"github.com/sanbornm/go-selfupdate/selfupdate"
+	"github.com/spf13/cobra"
 )
 
 // self-updateCmd represents the self-update command
 var selfUpdateCmd = &cobra.Command{
 	Use:   "self-update",
 	Short: "Update Rome if a new version exists",
-	Long: `This will allow Rome to update it's self like copmoser or other new fangled tools do`,
+	Long:  `This will allow Rome to update it's self like copmoser or other new fangled tools do`,
 	Run: func(cmd *cobra.Command, args []string) {
 		var updater = &selfupdate.Updater{
 			CurrentVersion: Version,
@@ -40,7 +41,7 @@ var selfUpdateCmd = &cobra.Command{
 			BinURL:         "http://h2ik.co/",
 			DiffURL:        "",
 			Dir:            ".rome_update_check/",
-			ForceCheck:	true,
+			ForceCheck:     true,
 			CmdName:        "rome", // app name
 		}
 

@@ -53,9 +53,21 @@ type server struct{}
 
 func (s *server) BuildFile(ctx context.Context, in *pb.FileRequest) (*pb.FileResponse, error) {
 	target := filepath.Join(buildFolder, in.Target)
-	logger.Log("msg", "Building File"+target)
+	logger.Log("msg", fmt.Sprintf("Building File: %s", target))
 	file := build.CreateRemoteFile(target, in.Contents)
 	err := file.Process(attributes.Flavor, attributes.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.FileResponse{File: target}, nil
+}
+
+func (s *server) DeleteFile(ctx context.Context, in *pb.FileRequest) (*pb.FileResponse, error) {
+	target := filepath.Join(buildFolder, in.Target)
+	logger.Log("msg", fmt.Sprintf("Deleting File: %s", target))
+	file := build.CreateRemoteFile(target, nil)
+	err := file.Delete()
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +101,7 @@ func (s *server) SetBuildAttributes(ctx context.Context, in *pb.SetBuildAttrRequ
 func (s *server) CleanCache(ctx context.Context, in *pb.CleanCacheRequest) (*pb.CleanCacheResponse, error) {
 
 	err := build.CleanCache(buildFolder, cleanCacheItems)
+	logger.Log("msg", "Cleaning Cache")
 	if err != nil {
 		return nil, err
 	}
