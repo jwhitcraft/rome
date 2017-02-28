@@ -95,28 +95,23 @@ func isValidFile(file string) bool {
 }
 
 func fileChanged(file iFile, isRemove bool) {
-	// this is a bit complex, but it works, should look at cleaning it up
-	if cleanCache {
-		if conduit != nil {
-			conduit.CleanCache(context.Background(), &pb.CleanCacheRequest{})
-		} else {
-			build.CleanCache(destination, cleanCacheItems)
-		}
+	tag := color.GreenString("[Built]")
+	if isRemove {
+		tag = color.RedString("[Removed]")
 	}
 	if conduit != nil {
+		if cleanCache {
+			conduit.CleanCache(context.Background(), &pb.CleanCacheRequest{})
+		}
 		file.SendToAqueduct(conduit)
 	} else {
+		if cleanCache {
+			build.CleanCache(destination, cleanCacheItems)
+		}
 		file.Process(flavor, version)
 	}
-	if isRemove {
-		log.Printf("%v %s",
-			color.RedString("[Removed]"),
-			file.GetTarget())
-	} else {
-		log.Printf("%v %s",
-			color.GreenString("[Built]"),
-			file.GetTarget())
-	}
+
+	log.Printf("%v %s", tag, file.GetTarget())
 }
 
 func init() {
