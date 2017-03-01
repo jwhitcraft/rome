@@ -41,7 +41,7 @@ var watchCmd = &cobra.Command{
 	Use:     "watch",
 	Example: "rome watch -v 7.9.0.0 -f ent -d /tmp/sugar /path/to/mango/git/checkout",
 	Args:    validSourceArg,
-	Short:   "Watch the file system for changes and built any files that change",
+	Short:   "Watch the file system for changes and build any files that change",
 	Long:    `Watch for file changes, and then build them as they happen.`,
 	PreRunE: buildPreRun,
 	Run: func(cmd *cobra.Command, args []string) {
