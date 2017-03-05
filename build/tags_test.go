@@ -1,21 +1,24 @@
 package build
 
-import "testing"
+import (
+	"bytes"
+	"testing"
+)
 
 func TestPrivateProcessBuildTag(t *testing.T) {
 
-	var flav string = "flav=ent && flav!=dev"
+	var flav []byte = []byte("flav=ent && flav!=dev")
 
 	if !processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be true, but got false for %s", flav)
 	}
 
-	flav = "flav=ent"
+	flav = []byte("flav=ent")
 	if !processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be true, but got false for %s", flav)
 	}
 
-	flav = "flav=pro && flav!=ent"
+	flav = []byte("flav=pro && flav!=ent")
 	if processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be false, but got true for %s", flav)
 	}
@@ -23,35 +26,35 @@ func TestPrivateProcessBuildTag(t *testing.T) {
 		t.Errorf("Expected Value to be true, but got false for %s", flav)
 	}
 
-	flav = "flav=corp"
+	flav = []byte("flav=corp")
 	if processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be false, but got true for %s", flav)
 	}
 
-	flav = "flav = ent"
+	flav = []byte("flav = ent")
 	if !processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be true, but got false for %s", flav)
 	}
 
-	flav = "flav=pro || flav=com"
+	flav = []byte("flav=pro || flav=com")
 	if !processBuildTag(flav, Flavors["ent"]) {
 		t.Errorf("Expected Value to be true, but got false for %s", flav)
 	}
 }
 
 func TestPrivateSplitTag(t *testing.T) {
-	var key string
-	var val string
+	var key []byte
+	var val []byte
 
-	key, val = splitTag("pro", "=")
+	key, val = splitTag([]byte("pro"), equalByte)
 
-	if key != "flav" || val != "pro" {
+	if !bytes.Equal(key, []byte("flav")) || !bytes.Equal(val, []byte("pro")) {
 		t.Errorf("Expected flav and pro but got %s and %s", key, val)
 	}
 
-	key, val = splitTag("lic=sub", "=")
+	key, val = splitTag([]byte("lic=sub"), equalByte)
 
-	if key != "lic" || val != "sub" {
+	if !bytes.Equal(key, []byte("lic")) || !bytes.Equal(val, []byte("sub")) {
 		t.Errorf("Expected lice and sub but got %s and %s", key, val)
 	}
 }

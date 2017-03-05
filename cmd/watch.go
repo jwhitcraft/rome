@@ -90,6 +90,7 @@ var watchCmd = &cobra.Command{
 func isValidFile(file string) bool {
 	var fileExt string = path.Ext(file)
 	return !strings.Contains(file, "___jb_") &&
+		!strings.Contains(file, ".git") &&
 		fileExt != ".swp" &&
 		!isExcluded(strings.Replace(file, source, "", -1), flavor)
 }

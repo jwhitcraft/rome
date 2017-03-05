@@ -11,8 +11,9 @@ import (
 
 	"time"
 
+	"bytes"
+
 	pb "github.com/jwhitcraft/rome/aqueduct"
-	"github.com/jwhitcraft/rome/utils"
 	"golang.org/x/net/context"
 )
 
@@ -34,6 +35,17 @@ var (
 	TagRegex = regexp.MustCompile("(?i)//[[:space:]]*(BEGIN|END|FILE|ELSE)[[:space:]]*SUGARCRM[[:space:]]*(.*) ONLY")
 	IdRegex  = regexp.MustCompile(`\$Id(.*)\$`)
 	VarRegex = regexp.MustCompile("@_SUGAR_(FLAV|VERSION|BUILD)")
+
+	// reusable variables in the loops
+	fileByte               = []byte("File")
+	variableSugarVersion   = []byte("@_SUGAR_VERSION")
+	variableSugarFlav      = []byte("@_SUGAR_FLAV")
+	variableSugarBuildNum  = []byte("@_SUGAR_BUILD_NUMBER")
+	variableSugarBuildTime = []byte("@_SUGAR_BUILD_TIME")
+
+	// golang has a weird date formatting thing
+	// see: https://gobyexample.com/time-formatting-parsing
+	timeOfBuild = []byte(time.Now().Format("2006-01-02 15:04pm"))
 )
 
 type File struct {
@@ -114,8 +126,6 @@ func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber 
 	var shouldProcess bool = false
 	var canProcess bool = false
 
-	var skippedLines utils.Counter
-
 	// lets make sure the that folder exists
 	var destFolder string = path.Dir(f.Target)
 	var fileExt string = path.Ext(f.Target)
@@ -125,7 +135,7 @@ func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber 
 	// regardless, if the file is in the node_modules folder
 	// don't try and process it
 	if !strings.Contains(destFolder, "node_modules") {
-		canProcess = contains(processableExtensions, fileExt)
+		canProcess = contains(processableExtensions, []byte(fileExt))
 	}
 
 	// first load the whole file to check for the build tags
@@ -135,12 +145,13 @@ func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber 
 		//return err;
 		return false
 	}
-	fileString := string(f.fileContents)
-	if canProcess && TagRegex.MatchString(fileString) {
+	fileBytes := f.fileContents
+	//fileString := string(f.fileContents)
+	if canProcess && TagRegex.Match(fileBytes) {
 		shouldProcess = true
 		// check to see if it's a type of FILE
-		matches := TagRegex.FindStringSubmatch(fileString)
-		if matches[1] == "FILE" {
+		matches := TagRegex.FindSubmatch(fileBytes)
+		if bytes.Equal(matches[1], fileByte) {
 			tagOk := processBuildTag(matches[2], Flavors[buildFlavor])
 			if tagOk == false {
 				// todo return nil here as no file should be built
@@ -150,48 +161,36 @@ func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber 
 	}
 
 	// do the variable replacement
-	if canProcess && VarRegex.MatchString(fileString) {
-		fileString = strings.Replace(fileString, "@_SUGAR_VERSION", buildVersion, -1)
-		fileString = strings.Replace(fileString, "@_SUGAR_FLAV", buildFlavor, -1)
-		fileString = strings.Replace(fileString, "@_SUGAR_BUILD_NUMBER", buildNumber, -1)
-		// golang has a weird date formatting thing
-		// see: https://gobyexample.com/time-formatting-parsing
-		fileString = strings.Replace(fileString, "@_SUGAR_BUILD_TIME", time.Now().Format("2006-01-02 15:04pm"), -1)
+	if canProcess && VarRegex.Match(fileBytes) {
+		fileBytes = bytes.Replace(fileBytes, variableSugarVersion, []byte(buildVersion), -1)
+		fileBytes = bytes.Replace(fileBytes, variableSugarFlav, []byte(buildFlavor), -1)
+		fileBytes = bytes.Replace(fileBytes, variableSugarBuildNum, []byte(buildNumber), -1)
+		fileBytes = bytes.Replace(fileBytes, variableSugarBuildTime, timeOfBuild, -1)
 	}
 	fw, err := os.Create(f.Target)
 	defer fw.Close()
 
 	if shouldProcess {
-		f := strings.NewReader(fileString)
-		if err != nil {
-			fmt.Printf("error opening file: %v\n", err)
-			os.Exit(1)
-		}
+		f := bytes.NewReader(fileBytes)
 		writer := bufio.NewWriter(fw)
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
-			val := scanner.Text()
+			val := scanner.Bytes()
 
-			if TagRegex.MatchString(val) {
+			if TagRegex.Match(val) {
 				// get the matches
-				matches := TagRegex.FindStringSubmatch(val)
+				matches := TagRegex.FindSubmatch(val)
 
-				switch matches[1] {
+				switch string(matches[1]) {
 				case "BEGIN":
 					useLine = processBuildTag(matches[2], Flavors[buildFlavor])
-					if !useLine {
-						skippedLines.Increment()
-					}
 				case "END":
-					skippedLines.Reset()
 					useLine = true
 				}
-			} else if IdRegex.MatchString(val) {
+			} else if IdRegex.Match(val) {
 				fmt.Fprintln(writer, "")
 			} else if useLine {
-				fmt.Fprintln(writer, val)
-			} else {
-				skippedLines.Increment()
+				fmt.Fprintln(writer, string(val))
 			}
 		}
 		if err := scanner.Err(); err != nil {
@@ -201,7 +200,7 @@ func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber 
 			writer.Flush()
 		}
 	} else {
-		fw.WriteString(fileString)
+		fw.WriteString(string(fileBytes))
 	}
 
 	return true

@@ -134,6 +134,9 @@ node_modules are not required inside of SugarCRM but are for Sidecar.
 			if f.Name() == "node_modules" && strings.Contains(path, "sugarcrm/node_modules") {
 				return filepath.SkipDir
 			}
+			if f.Name() == ".git" {
+				return filepath.SkipDir
+			}
 			if f.Name() == ".DS_Store" {
 				return nil
 			}
