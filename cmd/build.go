@@ -50,8 +50,9 @@ var (
 	clean      bool = false
 	cleanCache bool = false
 
-	fileWorkers    int = 80
-	fileBufferSize int = 4096
+	fileWorkers    int    = 80
+	fileBufferSize int    = 4096
+	buildNumber    string = "999"
 
 	cleanCacheItems = []string{"file_map.php", "api", "jsLanguage",
 		"modules", "smarty", "Expressions", "blowfish", "dashlets",
@@ -65,7 +66,7 @@ var (
 )
 
 type iFile interface {
-	Process(flavor string, version string) error
+	Process(flavor string, version string, buildNumber string) error
 	GetTarget() string
 	SendToAqueduct(conduit pb.AqueductClient) (*pb.FileResponse, error)
 }
@@ -201,7 +202,7 @@ func buildPreRun(cmd *cobra.Command, args []string) error {
 
 func convertToTargetPath(path string) string {
 	newPath := strings.Replace(path, source, "", -1)
-	if conduit != nil {
+	if conduit == nil {
 		newPath = filepath.Join(destination, newPath)
 	}
 
@@ -214,6 +215,7 @@ func init() {
 	addBuildCommands(buildCmd)
 
 	buildCmd.Flags().BoolVar(&clean, "clean", false, "Remove Existing Build Before Building")
+	buildCmd.Flags().StringVar(&buildNumber, "build-number", "999", "Use a custom build number")
 
 	buildCmd.Flags().IntVar(&fileWorkers, "file-workers", 80, "Number of Workers to start for processing files")
 	buildCmd.Flags().IntVar(&fileBufferSize, "file-buffer-size", 4096, "Size of the file buffer before it gets reset")
@@ -246,10 +248,11 @@ func createClient() (pb.AqueductClient, error) {
 	}
 
 	client.SetBuildAttributes(context.Background(), &pb.SetBuildAttrRequest{
-		Version: version,
-		Flavor:  flavor,
-		Folder:  remote_server_folder,
-		Clean:   clean,
+		Version:     version,
+		Flavor:      flavor,
+		Folder:      remote_server_folder,
+		Clean:       clean,
+		BuildNumber: buildNumber,
 	})
 
 	return client, nil
@@ -283,7 +286,7 @@ func fileWorker(files <-chan iFile, wg *sync.WaitGroup) {
 				_ = f
 
 			} else {
-				err := file.Process(flavor, version)
+				err := file.Process(flavor, version, buildNumber)
 				if err != nil {
 					fmt.Printf("Error Building File: %v\n", err)
 				}

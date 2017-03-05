@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 
+	"time"
+
 	pb "github.com/jwhitcraft/rome/aqueduct"
 	"github.com/jwhitcraft/rome/utils"
 	"golang.org/x/net/context"
@@ -30,10 +32,8 @@ var (
 	}
 
 	TagRegex = regexp.MustCompile("(?i)//[[:space:]]*(BEGIN|END|FILE|ELSE)[[:space:]]*SUGARCRM[[:space:]]*(.*) ONLY")
-
-	IdRegex = regexp.MustCompile(`\$Id(.*)\$`)
-
-	VarRegex = regexp.MustCompile("@_SUGAR_(FLAV|VERSION)")
+	IdRegex  = regexp.MustCompile(`\$Id(.*)\$`)
+	VarRegex = regexp.MustCompile("@_SUGAR_(FLAV|VERSION|BUILD)")
 )
 
 type File struct {
@@ -79,9 +79,9 @@ func (f *File) GetSource() string {
 	return f.Path
 }
 
-func (f *File) Process(flavor string, version string) error {
+func (f *File) Process(flavor string, version string, buildNumber string) error {
 	// todo: return errors from processFile
-	f.processFile(flavor, version)
+	f.processFile(flavor, version, buildNumber)
 
 	return nil
 }
@@ -109,7 +109,7 @@ func (f *File) readFile() error {
 	return err
 }
 
-func (f *File) processFile(buildFlavor string, buildVersion string) bool {
+func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber string) bool {
 	var useLine bool = true
 	var shouldProcess bool = false
 	var canProcess bool = false
@@ -153,6 +153,10 @@ func (f *File) processFile(buildFlavor string, buildVersion string) bool {
 	if canProcess && VarRegex.MatchString(fileString) {
 		fileString = strings.Replace(fileString, "@_SUGAR_VERSION", buildVersion, -1)
 		fileString = strings.Replace(fileString, "@_SUGAR_FLAV", buildFlavor, -1)
+		fileString = strings.Replace(fileString, "@_SUGAR_BUILD_NUMBER", buildNumber, -1)
+		// golang has a weird date formatting thing
+		// see: https://gobyexample.com/time-formatting-parsing
+		fileString = strings.Replace(fileString, "@_SUGAR_BUILD_TIME", time.Now().Format("2006-01-02 15:04pm"), -1)
 	}
 	fw, err := os.Create(f.Target)
 	defer fw.Close()

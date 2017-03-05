@@ -5,21 +5,23 @@ SOURCES := $(shell find $(SOURCEDIR) -name '*.go')
 BINARY=rome
 BUILD_TIME=`date +%FT%T%z`
 
-LDFLAGS=-ldflags "-X github.com/jwhitcraft/rome/cmd.Version=${VERSION} -X github.com/jwhitcraft/rome/cmd.BuildTime=${BUILD_TIME}"
+LDFLAGS=-ldflags "-X github.com/jwhitcraft/rome/cmd.Version=${VERSION} -X github.com/jwhitcraft/rome/cmd.BuildTime=${BUILD_TIME} -s -w"
 
 check-env:
 ifndef VERSION
 	$(error VERSION is undefined)
 endif
 
+GCFLAGS=-gcflags "-N -l"
 
-build = GOOS=$(1) GOARCH=$(2) go build ${LDFLAGS} -o packages/$(1)-$(2)$(3)
+
+build = GOOS=$(1) GOARCH=$(2) go build ${LDFLAGS} ${GCFLAGS} -o packages/$(1)-$(2)$(3)
 rename = cp packages/$(1)-$(2)$(3) public/${BINARY}-$(4)-$(5)$(3)
 
 release: check-env clean windows darwin linux
 
 dev: $(SOURCES)
-	go build ${LDFLAGS} -o ${BINARY} main.go
+	go build ${LDFLAGS} ${GCFLAGS} -o ${BINARY} main.go
 
 .PHONY: clean
 clean:

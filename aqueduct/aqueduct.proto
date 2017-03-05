@@ -38,6 +38,7 @@ message SetBuildAttrRequest {
     string version = 2;
     string flavor = 3;
     bool clean = 4;
+    string buildNumber = 5;
 }
 
 message BuildAttrResponse {
@@ -45,6 +46,7 @@ message BuildAttrResponse {
     string version = 2;
     string flavor = 3;
     bool clean = 4;
+    string buildNumber = 5;
 }
 
 message CleanCacheRequest {}

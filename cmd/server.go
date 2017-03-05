@@ -55,7 +55,7 @@ func (s *server) BuildFile(ctx context.Context, in *pb.FileRequest) (*pb.FileRes
 	target := filepath.Join(buildFolder, in.Target)
 	logger.Log("msg", fmt.Sprintf("Building File: %s", target))
 	file := build.CreateRemoteFile(target, in.Contents)
-	err := file.Process(attributes.Flavor, attributes.Version)
+	err := file.Process(attributes.Flavor, attributes.Version, attributes.BuildNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (s *server) CreateSymLink(ctx context.Context, in *pb.CreateSymLinkRequest)
 	target := filepath.Join(buildRoot, attributes.Folder, in.Target)
 	logger.Log("msg", fmt.Sprintf("Symlinking %s to %s", in.OriginFile, target))
 	file := build.CreateSymLink(target, in.OriginFile)
-	err := file.Process(attributes.Flavor, attributes.Version)
+	err := file.Process(attributes.Flavor, attributes.Version, attributes.BuildNumber)
 	if err != nil {
 		return nil, err
 	}

@@ -108,7 +108,7 @@ func fileChanged(file iFile, isRemove bool) {
 		if cleanCache {
 			build.CleanCache(destination, cleanCacheItems)
 		}
-		file.Process(flavor, version)
+		file.Process(flavor, version, buildNumber)
 	}
 
 	log.Printf("%v %s", tag, file.GetTarget())
