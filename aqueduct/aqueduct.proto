@@ -1,0 +1,53 @@
+
+syntax = "proto3";
+
+package aqueduct;
+
+// The cesar service definition
+service Aqueduct {
+    rpc BuildFile (FileRequest) returns (FileResponse) {}
+    rpc DeleteFile (FileRequest) returns (FileResponse) {}
+    rpc CreateSymLink (CreateSymLinkRequest) returns (FileResponse) {}
+    rpc SetBuildAttributes(SetBuildAttrRequest) returns (BuildAttrResponse) {}
+    rpc GetBuildAttributes(GetBuildAttrRequest) returns (BuildAttrResponse) {}
+    rpc CleanCache(CleanCacheRequest) returns (CleanCacheResponse) {}
+}
+
+// The Request message containing information about the file
+message FileRequest {
+    string path = 1;
+    string target = 2;
+    bytes contents = 3;
+}
+
+message CreateSymLinkRequest {
+    string target = 1;
+    string origin_file = 2;
+}
+
+// The Response for when a file was built
+message FileResponse {
+    string file = 1;
+}
+
+message GetBuildAttrRequest {
+}
+
+message SetBuildAttrRequest {
+    string folder = 1;
+    string version = 2;
+    string flavor = 3;
+    bool clean = 4;
+    string buildNumber = 5;
+}
+
+message BuildAttrResponse {
+    string folder = 1;
+    string version = 2;
+    string flavor = 3;
+    bool clean = 4;
+    string buildNumber = 5;
+}
+
+message CleanCacheRequest {}
+message CleanCacheResponse {}

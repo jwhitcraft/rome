@@ -10,3 +10,21 @@ import:
 - package: github.com/spf13/cobra
   version: master
   repo: https://github.com/dnephin/cobra.git
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: google.golang.org/grpc
+  version: ^1.0.5
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/go-kit/kit
+  version: ^0.3.0
+  subpackages:
+  - log
+- package: github.com/cpuguy83/go-md2man
+  version: ^1.0.6
+  subpackages:
+  - md2man
+- package: github.com/cortesi/moddwatch
+- package: github.com/cortesi/termlog

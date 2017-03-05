@@ -1,12 +1,38 @@
-hash: acf85001796970eb832f285ec5d235c350910fa5f3e2934adea535ae14bd429b
-updated: 2017-01-26T11:33:25.069103077-05:00
+hash: 47ad396faebe1e39441acafb9a9035070b97bf28f8bb3d444cf60dfe82854f79
+updated: 2017-03-05T11:09:43.311409755-05:00
 imports:
+- name: github.com/bmatcuk/doublestar
+  version: dd6a6f0a8cdfaaa88b08cf26cf1bc7d69003ee13
+  repo: https://github.com/bmatcuk/doublestar
+- name: github.com/cortesi/moddwatch
+  version: a149019f9ed6f16033de28f66d8c1247593a0104
+  subpackages:
+  - filter
+- name: github.com/cortesi/termlog
+  version: 2ed14eb6ce62ec5bcc3fd25885a1d13d53f34fd1
+- name: github.com/cpuguy83/go-md2man
+  version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
+  subpackages:
+  - md2man
 - name: github.com/fatih/color
-  version: 34e4ee095d12986a2cef5ddb9aeb3b8cfcfea17c
+  version: 7824417a424b65227be8ac9b14d545a7f3e6c3f0
 - name: github.com/fsnotify/fsnotify
-  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+  version: 7d7316ed6e1ed2de075aab8dfc76de5d158d66e1
+- name: github.com/go-kit/kit
+  version: f66b0e13579bfc5a48b9e2a94b1209c107ea1f41
+  subpackages:
+  - log
+- name: github.com/go-logfmt/logfmt
+  version: 390ab7935ee28ec6b286364bba9b4dd6410cb3d5
+- name: github.com/go-stack/stack
+  version: 100eb0c0a9c5b306ca2fb4f165df21d80ada4b82
+- name: github.com/golang/protobuf
+  version: 69b215d01a5606c843240eab4937eab3acee6530
+  subpackages:
+  - proto
+  - protoc-gen-go/descriptor
 - name: github.com/hashicorp/hcl
-  version: 39fa3a62ba92cf550eb0f9cfb84757ef79b8aa30
+  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -22,52 +48,93 @@ imports:
   version: 6e7f843663477789fac7c02def0d0909e969b4e5
 - name: github.com/kr/binarydist
   version: 9955b0ab8708602d411341e55fffd7e0700f86bd
+- name: github.com/kr/logfmt
+  version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
 - name: github.com/magiconair/properties
   version: b3b15ef068fd0b17ddf408a23669f20811d194d2
 - name: github.com/mattn/go-colorable
-  version: d228849504861217f796da67fae4f6e347643f15
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mitchellh/mapstructure
-  version: ed105d635dfa9ea7133f7c79f1eb36203fc3a156
+  version: db1efb556f84b25a0a13a04aad883943538ad2e0
 - name: github.com/pelletier/go-buffruneio
-  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+  version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: a1f048ba24490f9b0674a67e1ce995d685cddf4a
+  version: 13d49d4606eb801b8f01ae542b4afc4c6ee3d84a
 - name: github.com/rjeczalik/notify
-  version: b8dab33f409f63a90858d0eff0da94ed1a692b66
+  version: 7e20c15e6693a7d6ad269a94b70ed68bc4a875a7
+- name: github.com/russross/blackfriday
+  version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/sanbornm/go-selfupdate
   version: bf295275fb1ee4e347c09330ed9a3c76cc19895a
   subpackages:
   - selfupdate
+- name: github.com/shurcooL/sanitized_anchor_name
+  version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/spf13/afero
-  version: 72b31426848c6ef12a7a8e216708cb0d1530f074
+  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
   - mem
 - name: github.com/spf13/cast
-  version: 56a7ecbeb18dde53c6db4bd96b541fd9741b8d44
+  version: ce135a4ebeee6cfe9a26c93ee0d37825f26113c7
 - name: github.com/spf13/cobra
   version: 5d13e8c9d917d962ffc593fb2529d281ae04a7fd
   repo: https://github.com/dnephin/cobra.git
+  subpackages:
+  - doc
 - name: github.com/spf13/jwalterweatherman
   version: fa7ca7e836cf3a8bb4ebf799f472c12d7e903d66
 - name: github.com/spf13/pflag
-  version: a232f6d9f87afaaa08bafaff5da685f974b83313
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: github.com/spf13/viper
-  version: 5ed0fc31f7f453625df314d8e66b9791e8d13003
+  version: 7538d73b4eb9511d85a9f1dfef202eeb8ac260f4
+- name: golang.org/x/crypto
+  version: 8e06e8ddd9629eb88639aba897641bff8031f1d3
+  repo: https://go.googlesource.com/crypto
+  subpackages:
+  - ssh/terminal
+- name: golang.org/x/net
+  version: d379faa25cbdc04d653984913a2ceb43b0bc46d7
+  subpackages:
+  - context
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
 - name: golang.org/x/sys
-  version: d75a52659825e75fff6158388dddc6a5b04f9ba5
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
+  repo: https://go.googlesource.com/sys
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 11dbc599981ccdf4fb18802a28392a8bcf7a9395
+  version: f28f36722d5ef2f9655ad3de1f248e3e52ad5ebd
   subpackages:
   - transform
   - unicode/norm
+- name: google.golang.org/grpc
+  version: 708a7f9f3283aa2d4f6132d287d78683babe55c8
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - reflection
+  - reflection/grpc_reflection_v1alpha
+  - stats
+  - tap
+  - transport
 - name: gopkg.in/inconshreveable/go-update.v0
   version: d8b0b1d421aa1cbf392c05869f8abbc669bb7066
   subpackages:
   - download
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: a3f3340b5840cee44f372bddb5880fcbc419b46a
 testImports: []

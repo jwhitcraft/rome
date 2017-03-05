@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	Version   = "1.0.0"
+	Version   = "2.0.0"
 	BuildTime = "2015-10-03T11:08:49+0200"
 )
 
@@ -35,7 +35,7 @@ var (
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "What Version of Rome is this",
-	Long: `Just Displays the Version of Rome`,
+	Long:  `Just Displays the Version of Rome`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("SugarCRM Rome, A Build Tool\n Version: %s, Built At: %s", Version, BuildTime)
 	},
