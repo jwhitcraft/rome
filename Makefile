@@ -15,7 +15,7 @@ endif
 GCFLAGS=-gcflags "-N -l"
 
 
-build = GOOS=$(1) GOARCH=$(2) go build ${LDFLAGS} ${GCFLAGS} -o packages/$(1)-$(2)$(3)
+build = GOOS=$(1) GOARCH=$(2) go build ${LDFLAGS} -o packages/$(1)-$(2)$(3)
 rename = cp packages/$(1)-$(2)$(3) public/${BINARY}-$(4)-$(5)$(3)
 
 release: check-env clean windows darwin linux
@@ -26,7 +26,7 @@ dev: $(SOURCES)
 .PHONY: clean
 clean:
 	if [ -f ./${BINARY} ] ; then rm ${BINARY} ; fi
-	if [ -d ./packages ] ; then rm ./packages/* ; fi
+	if [ -d ./packages ] ; then rm -f ./packages/* ; fi
 
 test:
 	go test -v `glide novendor`

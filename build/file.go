@@ -37,7 +37,7 @@ var (
 	VarRegex = regexp.MustCompile("@_SUGAR_(FLAV|VERSION|BUILD)")
 
 	// reusable variables in the loops
-	fileByte               = []byte("File")
+	fileByte               = []byte("FILE")
 	variableSugarVersion   = []byte("@_SUGAR_VERSION")
 	variableSugarFlav      = []byte("@_SUGAR_FLAV")
 	variableSugarBuildNum  = []byte("@_SUGAR_BUILD_NUMBER")
@@ -163,7 +163,7 @@ func (f *File) processFile(buildFlavor string, buildVersion string, buildNumber 
 	// do the variable replacement
 	if canProcess && VarRegex.Match(fileBytes) {
 		fileBytes = bytes.Replace(fileBytes, variableSugarVersion, []byte(buildVersion), -1)
-		fileBytes = bytes.Replace(fileBytes, variableSugarFlav, []byte(buildFlavor), -1)
+		fileBytes = bytes.Replace(fileBytes, variableSugarFlav, []byte(strings.ToUpper(buildFlavor)), -1)
 		fileBytes = bytes.Replace(fileBytes, variableSugarBuildNum, []byte(buildNumber), -1)
 		fileBytes = bytes.Replace(fileBytes, variableSugarBuildTime, timeOfBuild, -1)
 	}
