@@ -1,18 +1,13 @@
 # rome
 A new build system for SugarCRM [![Build Status](https://travis-ci.org/jwhitcraft/rome.svg?branch=master)](https://travis-ci.org/jwhitcraft/rome)
 
-## Installing
-```shell
-curl -L http://h2ik.co/rome/rome-`uname -s`-`uname -m` -o /usr/local/bin/rome; chmod +x /usr/local/bin/rome
-```
-
-## Updating
+## Updating (Currently does not work)
 To update rome, just run `rome self-update`
 
 ## Usage
 
 ### Build
-This command will build all the files inside of the source directory
+This command will build all the files inside the source directory
 
 `rome build --version=7.9.0.0 --flavor=ent --destination=/tmp/sugar-build /path/to/mango/checkout/sugarcrm`
 
@@ -33,6 +28,10 @@ This command will keep a process running and build each file as it's created or 
 ## Building Rome
 Make sure that you have golang installed
 
+### Install dependencies for compiling
+`go mod vendor`
+
+### Compile
 `make clean; make -e VERSION=2.0.0AlphaX`
 
 ## docker

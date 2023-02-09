@@ -1,3 +1,6 @@
+#IDE
+.idea/
+
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
@@ -6,6 +9,7 @@
 # Folders
 _obj
 _test
+vendor
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -22,7 +26,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+rome
 
-
-packages/*
 public/*
+.rome_update_check
