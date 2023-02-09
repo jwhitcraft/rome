@@ -54,10 +54,10 @@ var watchCmd = &cobra.Command{
 		c := make(chan *moddwatch.Mod, 1)
 
 		paths := []string{
-			source + "/...",
+			"/...",
 		}
 
-		watch, err := moddwatch.Watch(paths, 300*time.Millisecond, c)
+		watch, err := moddwatch.Watch(source, paths, nil, 300*time.Millisecond, c)
 		defer watch.Stop()
 		if err != nil {
 			os.Exit(500)
